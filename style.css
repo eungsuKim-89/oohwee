@@ -575,3 +575,31 @@ form.apply-form { display: grid; gap: 18px; }
   cursor: pointer;
 }
 .consent-check input { margin-top: 3px; }
+
+/* ---------- mobile hardening ---------- */
+html, body { overflow-x: hidden; }
+
+@media (max-width: 560px) {
+  .wrap { padding: 0 18px; }
+  .hero { padding: 64px 0 90px; }
+  .hero-tag { font-size: 11px; padding: 5px 12px; }
+  .page-hero { padding: 48px 0 70px; }
+  .card-panel { padding: 22px 16px; }
+  .pillar { padding: 24px 18px; }
+  .event-header {
+    padding: 16px 16px;
+    flex-wrap: wrap;
+  }
+  .event-main { flex: 1 1 100%; }
+  .event-chevron { align-self: flex-start; }
+  .event-detail { padding: 0 16px 20px; }
+  .event-detail.open { padding-top: 16px; }
+  .event-meta div { line-height: 1.6; }
+  .btn { width: 100%; text-align: center; }
+  .form-submit { width: 100%; }
+  .consent-block { padding: 14px 14px; }
+  .consent-text { max-height: 110px; font-size: 12px; }
+  .info-list li { flex-direction: column; gap: 4px; }
+  .info-list .k { width: auto; }
+  footer { padding: 44px 0 28px; }
+}
