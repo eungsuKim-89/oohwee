@@ -5,6 +5,7 @@
    ========================================================== */
 
 :root {
+  color-scheme: light only;
   --paper: #f5f1e7;
   --paper-dim: #ece5d3;
   --ink: #17140f;
@@ -493,8 +494,8 @@ footer .foot-tagline { color: #c9c3b6; font-size: 14px; margin: 0; }
   padding-top: 2px;
 }
 
-form.apply-form { display: grid; gap: 18px; }
-.form-row { display: grid; gap: 6px; }
+form.apply-form { display: grid; gap: 18px; min-width: 0; }
+.form-row { display: grid; gap: 6px; min-width: 0; }
 .form-row label {
   font-family: var(--font-mono);
   font-size: 12.5px;
@@ -508,12 +509,21 @@ form.apply-form { display: grid; gap: 18px; }
   font-size: 15px;
   padding: 12px 14px;
   border: 1.5px solid var(--ink);
-  background: var(--paper);
-  color: var(--ink);
+  background: var(--paper) !important;
+  color: var(--ink) !important;
+  color-scheme: light only;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.form-row select {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
 }
 .form-row textarea { min-height: 110px; resize: vertical; }
 .form-row-2 { display: flex; flex-wrap: wrap; gap: 18px; }
-.form-row-2 .form-row { flex: 1 1 220px; }
+.form-row-2 .form-row { flex: 1 1 220px; min-width: 0; }
 @media (max-width: 560px) {
   .form-row-2 .form-row { flex: 1 1 100%; }
 }
@@ -603,3 +613,4 @@ html, body { overflow-x: hidden; }
   .info-list .k { width: auto; }
   footer { padding: 44px 0 28px; }
 }
+
