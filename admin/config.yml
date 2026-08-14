@@ -1,0 +1,82 @@
+backend:
+  name: git-gateway
+  branch: main
+
+# Netlify Identity + Git Gateway를 켜면 이 설정으로 로그인 사용자가
+# GitHub 저장소에 직접 커밋할 필요 없이 화면에서 콘텐츠를 수정할 수 있습니다.
+
+media_folder: "images/reference"
+public_folder: "images/reference"
+
+collections:
+  - name: "events"
+    label: "행사 공고"
+    label_singular: "행사"
+    files:
+      - name: "events"
+        label: "행사 목록"
+        file: "data/events.json"
+        extension: "json"
+        format: "json"
+        fields:
+          - name: "items"
+            label: "행사 목록"
+            widget: "list"
+            summary: "{{fields.title}} — {{fields.status}}"
+            fields:
+              - name: "id"
+                label: "행사 ID (영문/숫자)"
+                widget: "string"
+              - name: "title"
+                label: "행사명"
+                widget: "string"
+              - name: "date"
+                label: "날짜"
+                widget: "string"
+              - name: "place"
+                label: "장소"
+                widget: "string"
+              - name: "status"
+                label: "모집 상태"
+                widget: "select"
+                options: ["모집중", "모집예정", "마감"]
+                default: "모집중"
+              - name: "deposit"
+                label: "구좌비 안내"
+                widget: "string"
+                required: false
+              - name: "deadline"
+                label: "마감일 안내"
+                widget: "string"
+                required: false
+              - name: "note"
+                label: "한 줄 설명"
+                widget: "text"
+                required: false
+
+  - name: "reference"
+    label: "레퍼런스 사진"
+    label_singular: "사진"
+    files:
+      - name: "reference"
+        label: "레퍼런스 목록"
+        file: "data/reference.json"
+        extension: "json"
+        format: "json"
+        fields:
+          - name: "items"
+            label: "사진 목록"
+            widget: "list"
+            summary: "{{fields.caption}}"
+            fields:
+              - name: "image"
+                label: "사진"
+                widget: "image"
+              - name: "category"
+                label: "카테고리"
+                widget: "select"
+                options: ["프리마켓", "공연", "기획"]
+              - name: "caption"
+                label: "설명 (선택)"
+                widget: "string"
+                required: false
