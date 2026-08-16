@@ -5,6 +5,7 @@
    ========================================================== */
 
 :root {
+  color-scheme: light only;
   --paper: #f5f1e7;
   --paper-dim: #ece5d3;
   --ink: #17140f;
@@ -21,6 +22,33 @@
 }
 
 * { box-sizing: border-box; }
+
+/* ── 어떤 기기에서도 요소가 화면 폭을 넘지 않도록 하는 전역 안전장치 ── */
+html, body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+body {
+  overflow-wrap: break-word;
+  word-break: keep-all;
+}
+img, svg, video, iframe, table {
+  max-width: 100%;
+  height: auto;
+}
+/* flex/grid 자식이 내용 길이 때문에 부모보다 넓어지는 것 방지 (가장 흔한 원인) */
+.wrap, section, div, form, .pillar-grid, .pillar, .event-list, .event-card,
+.event-header, .event-detail, .foot-grid, .form-row, .form-row-2,
+.consent-block, .gallery, .gallery figure {
+  min-width: 0;
+  max-width: 100%;
+}
+input, select, textarea, button {
+  max-width: 100%;
+}
+input:focus, select:focus, textarea:focus, button:focus {
+  outline-offset: -2px;
+}
 
 html { scroll-behavior: smooth; }
 
@@ -493,8 +521,8 @@ footer .foot-tagline { color: #c9c3b6; font-size: 14px; margin: 0; }
   padding-top: 2px;
 }
 
-form.apply-form { display: grid; gap: 18px; }
-.form-row { display: grid; gap: 6px; }
+form.apply-form { display: grid; gap: 18px; min-width: 0; }
+.form-row { display: grid; gap: 6px; min-width: 0; }
 .form-row label {
   font-family: var(--font-mono);
   font-size: 12.5px;
@@ -508,12 +536,21 @@ form.apply-form { display: grid; gap: 18px; }
   font-size: 15px;
   padding: 12px 14px;
   border: 1.5px solid var(--ink);
-  background: var(--paper);
-  color: var(--ink);
+  background: var(--paper) !important;
+  color: var(--ink) !important;
+  color-scheme: light only;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.form-row select {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
 }
 .form-row textarea { min-height: 110px; resize: vertical; }
 .form-row-2 { display: flex; flex-wrap: wrap; gap: 18px; }
-.form-row-2 .form-row { flex: 1 1 220px; }
+.form-row-2 .form-row { flex: 1 1 220px; min-width: 0; }
 @media (max-width: 560px) {
   .form-row-2 .form-row { flex: 1 1 100%; }
 }
@@ -575,3 +612,31 @@ form.apply-form { display: grid; gap: 18px; }
   cursor: pointer;
 }
 .consent-check input { margin-top: 3px; }
+
+/* ---------- mobile hardening ---------- */
+html, body { overflow-x: hidden; }
+
+@media (max-width: 560px) {
+  .wrap { padding: 0 18px; }
+  .hero { padding: 64px 0 90px; }
+  .hero-tag { font-size: 11px; padding: 5px 12px; }
+  .page-hero { padding: 48px 0 70px; }
+  .card-panel { padding: 22px 16px; }
+  .pillar { padding: 24px 18px; }
+  .event-header {
+    padding: 16px 16px;
+    flex-wrap: wrap;
+  }
+  .event-main { flex: 1 1 100%; }
+  .event-chevron { align-self: flex-start; }
+  .event-detail { padding: 0 16px 20px; }
+  .event-detail.open { padding-top: 16px; }
+  .event-meta div { line-height: 1.6; }
+  .btn { width: 100%; text-align: center; }
+  .form-submit { width: 100%; }
+  .consent-block { padding: 14px 14px; }
+  .consent-text { max-height: 110px; font-size: 12px; }
+  .info-list li { flex-direction: column; gap: 4px; }
+  .info-list .k { width: auto; }
+  footer { padding: 44px 0 28px; }
+}
