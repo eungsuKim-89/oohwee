@@ -25,6 +25,15 @@ collections:
                 widget: "string"
                 hint: "예: 문정, 위례, 여의도 등 자유롭게 입력 — 새 이름을 적으면 새 카테고리로 자동 생성됩니다"
                 required: false
+              - label: "회차 목록"
+                name: "rounds"
+                widget: "list"
+                required: false
+                hint: "예: 10월 1차, 10월 2차, 10월 3차 — 필요한 만큼 추가하세요. 하나도 안 넣으면 회차 선택 없이 신청 가능합니다"
+                field:
+                  label: "회차명"
+                  name: "round_name"
+                  widget: "string"
               - label: "날짜"
                 name: "date"
                 widget: "string"
