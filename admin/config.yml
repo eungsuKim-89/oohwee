@@ -20,6 +20,7 @@ collections:
               - label: "행사 ID"
                 name: "id"
                 widget: "string"
+                required: false
               - label: "행사명"
                 name: "title"
                 widget: "string"
@@ -32,14 +33,11 @@ collections:
                 name: "rounds"
                 widget: "list"
                 required: false
-                hint: "예: 10월 1차, 10월 2차, 10월 3차 — 필요한 만큼 추가하세요. 하나도 안 넣으면 회차 선택 없이 신청 가능합니다"
+                hint: "예: 1회차 - 09.30~10.01 (수,목) — 날짜·요일까지 한 줄에 다 적어주세요. 이 목록에 있는 문구가 그대로 신청 화면 체크박스로 나옵니다"
                 field:
                   label: "회차명"
                   name: "round_name"
                   widget: "string"
-              - label: "날짜"
-                name: "date"
-                widget: "string"
               - label: "장소"
                 name: "place"
                 widget: "string"
