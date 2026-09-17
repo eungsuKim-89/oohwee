@@ -147,7 +147,7 @@ async function renderEventList() {
           <div class="event-meta">
             <div><span class="k">DATE</span>${ev.date}</div>
             <div><span class="k">PLACE</span>${ev.place}</div>
-            <div><span class="k">FEE</span>${ev.deposit || "추후 안내"}</div>
+            <div><span class="k">FEE</span>${ev.price || "추후 안내"}</div>
             ${ev.deadline ? `<div><span class="k">DEADLINE</span>${ev.deadline}까지</div>` : ""}
           </div>
           ${ev.note ? `<div class="event-note">${ev.note}</div>` : ""}
