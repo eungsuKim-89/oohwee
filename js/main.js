@@ -98,27 +98,46 @@ let allEventsCache = [];
  * 회차가 하나도 등록 안 된 행사면, 회차 선택 없이 바로 진행 가능하게 만든다.
  */
 function updateRoundOptions(title) {
-  const roundSelect = document.getElementById("round");
-  if (!roundSelect) return;
+  const container = document.getElementById("round-options");
+  const hidden = document.getElementById("round-hidden");
+  if (!container) return;
 
-  roundSelect.innerHTML = "";
+  container.innerHTML = "";
+  if (hidden) hidden.value = "";
+
   const ev = allEventsCache.find((e) => e.title === title);
   const rounds = (ev && ev.rounds) || [];
 
   if (!title) {
-    roundSelect.appendChild(new Option("먼저 위에서 행사를 선택해 주세요", ""));
+    container.innerHTML = `<span class="round-empty">먼저 위에서 행사를 선택해 주세요</span>`;
     return;
   }
 
   if (rounds.length === 0) {
-    roundSelect.appendChild(new Option("회차 구분 없음", "회차 구분 없음"));
+    container.innerHTML = `<span class="round-empty">이 행사는 회차 구분이 없습니다</span>`;
+    if (hidden) hidden.value = "회차 구분 없음";
     return;
   }
 
-  roundSelect.appendChild(new Option("회차를 선택해 주세요", ""));
-  rounds.forEach((r) => {
+  rounds.forEach((r, i) => {
     const name = r.round_name || r;
-    roundSelect.appendChild(new Option(name, name));
+    const wrap = document.createElement("label");
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.value = name;
+    cb.className = "round-checkbox";
+    cb.id = `round-cb-${i}`;
+    wrap.appendChild(cb);
+    wrap.appendChild(document.createTextNode(name));
+    container.appendChild(wrap);
+  });
+
+  // 체크박스 상태가 바뀔 때마다, 선택된 값들을 hidden input에 합쳐서 넣어둔다 (Formspree 전송용)
+  container.querySelectorAll(".round-checkbox").forEach((cb) => {
+    cb.addEventListener("change", () => {
+      const selected = Array.from(container.querySelectorAll(".round-checkbox:checked")).map((c) => c.value);
+      if (hidden) hidden.value = selected.join(", ");
+    });
   });
 }
 
@@ -168,13 +187,12 @@ async function renderEventList() {
           <div class="event-main">
             <span class="event-status ${statusClass}">${ev.status}</span>
             <h3>${ev.title}</h3>
-            <div class="event-meta-inline">${ev.date} · ${ev.place}</div>
+            <div class="event-meta-inline">${ev.place}</div>
           </div>
           <span class="event-chevron">＋</span>
         </button>
         <div class="event-detail" id="event-detail-${i}">
           <div class="event-meta">
-            <div><span class="k">DATE</span>${ev.date}</div>
             <div><span class="k">PLACE</span>${ev.place}</div>
             <div><span class="k">FEE</span>${ev.deposit || "추후 안내"}</div>
             ${ev.deadline ? `<div><span class="k">DEADLINE</span>${ev.deadline}까지</div>` : ""}
@@ -329,6 +347,13 @@ function setupApplyForm() {
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
+
+    const roundHidden = document.getElementById("round-hidden");
+    if (roundHidden && !roundHidden.value) {
+      alert("참여 회차를 1개 이상 선택해 주세요.");
+      return;
+    }
+
     if (form.action.includes("YOUR_FORM_ID")) {
       alert("아직 신청서 수신 이메일이 연결되지 않았어요. README의 Formspree 연결 안내를 먼저 진행해 주세요.");
       return;
