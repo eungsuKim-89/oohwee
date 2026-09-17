@@ -20,6 +20,11 @@ collections:
               - label: "행사명"
                 name: "title"
                 widget: "string"
+              - label: "세부카테고리"
+                name: "category"
+                widget: "string"
+                hint: "예: 문정, 위례, 여의도 등 자유롭게 입력 — 새 이름을 적으면 새 카테고리로 자동 생성됩니다"
+                required: false
               - label: "날짜"
                 name: "date"
                 widget: "string"
