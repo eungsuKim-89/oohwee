@@ -93,6 +93,35 @@ const STATIC_INFO = `
 
 let allEventsCache = [];
 
+/**
+ * 선택한 행사(title)에 등록된 "회차 목록"으로 #round 셀렉트박스를 다시 채운다.
+ * 회차가 하나도 등록 안 된 행사면, 회차 선택 없이 바로 진행 가능하게 만든다.
+ */
+function updateRoundOptions(title) {
+  const roundSelect = document.getElementById("round");
+  if (!roundSelect) return;
+
+  roundSelect.innerHTML = "";
+  const ev = allEventsCache.find((e) => e.title === title);
+  const rounds = (ev && ev.rounds) || [];
+
+  if (!title) {
+    roundSelect.appendChild(new Option("먼저 위에서 행사를 선택해 주세요", ""));
+    return;
+  }
+
+  if (rounds.length === 0) {
+    roundSelect.appendChild(new Option("회차 구분 없음", "회차 구분 없음"));
+    return;
+  }
+
+  roundSelect.appendChild(new Option("회차를 선택해 주세요", ""));
+  rounds.forEach((r) => {
+    const name = r.round_name || r;
+    roundSelect.appendChild(new Option(name, name));
+  });
+}
+
 async function renderEventList() {
   const el = document.getElementById("event-list");
   if (!el) return;
@@ -182,6 +211,11 @@ async function renderEventList() {
       if (ev.status === "마감") opt.disabled = true;
       select.appendChild(opt);
     });
+
+    // 행사를 선택하면, 그 행사에 등록된 회차 목록으로 "참여 회차"를 자동 갱신
+    select.addEventListener("change", () => {
+      updateRoundOptions(select.value);
+    });
   }
 
   // 카드 헤더 클릭 → 아코디언 토글
@@ -204,6 +238,7 @@ async function renderEventList() {
     btn.addEventListener("click", () => {
       const title = btn.dataset.eventTitle;
       if (select) select.value = title;
+      updateRoundOptions(title);
       const label = document.getElementById("selected-event-label");
       if (label) label.textContent = `선택한 행사: ${title}`;
       const applySection = document.getElementById("apply-section");
