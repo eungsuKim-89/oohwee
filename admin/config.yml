@@ -13,13 +13,26 @@ collections:
         label: "행사 목록"
         file: "data/events.json"
         fields:
-          - {label: "목록", name: "items", widget: "list", fields:
-              - {label: "행사명", name: "title", widget: "string"}
-              - {label: "날짜", name: "date", widget: "string"}
-              - {label: "장소", name: "place", widget: "string"}
-              - {label: "구좌비", name: "price", widget: "string"}
-              - {label: "모집 상태", name: "status", widget: "select", options: ["모집중", "모집예정", "마감"]}
-          }
+          - label: "목록"
+            name: "items"
+            widget: "list"
+            fields:
+              - label: "행사명"
+                name: "title"
+                widget: "string"
+              - label: "날짜"
+                name: "date"
+                widget: "string"
+              - label: "장소"
+                name: "place"
+                widget: "string"
+              - label: "구좌비"
+                name: "price"
+                widget: "string"
+              - label: "모집 상태"
+                name: "status"
+                widget: "select"
+                options: ["모집중", "모집예정", "마감"]
 
   - name: "reference"
     label: "레퍼런스 사진"
@@ -28,8 +41,21 @@ collections:
         label: "레퍼런스 목록"
         file: "data/reference.json"
         fields:
-          - {label: "목록", name: "items", widget: "list", fields:
-              - {label: "사진들(여러장 선택 가능)", name: "images", widget: "list", field: {label: "사진", name: "image", widget: "image"}}
-              - {label: "카테고리", name: "category", widget: "select", options: ["프리마켓", "공연", "기획"]}
-              - {label: "설명", name: "description", widget: "text"}
-          }
+          - label: "목록"
+            name: "items"
+            widget: "list"
+            fields:
+              - label: "사진들(여러장 선택 가능)"
+                name: "images"
+                widget: "list"
+                field:
+                  label: "사진"
+                  name: "image"
+                  widget: "image"
+              - label: "카테고리"
+                name: "category"
+                widget: "select"
+                options: ["프리마켓", "공연", "기획"]
+              - label: "설명"
+                name: "description"
+                widget: "text"
