@@ -126,7 +126,7 @@ function parseBaseUnitPrice(depositText) {
 
 /**
  * 체크된 회차마다 각자 고른 테이블/행거 선택을 모아서,
- * 회차별로 각각 계산한 금액을 합산한다. (회차마다 다른 품목 신청 가능)
+ * 회차별로 각각 계산한 금액을 합산한다. (회차마다 다른 테이블 신청 가능)
  */
 function recalcFee() {
   const feeLine = document.getElementById("round-fee-line");
@@ -167,7 +167,7 @@ function recalcFee() {
     const sel = parseTableSelection(tableValue);
     if (!sel) {
       allChosen = false;
-      detailLines.push(`${roundName}: (품목 미선택)`);
+      detailLines.push(`${roundName}: (테이블 미선택)`);
       return;
     }
     const perRound = sel.type === "table" ? sel.count * unitPrice : sel.count * hangerUnitPrice;
@@ -179,7 +179,7 @@ function recalcFee() {
   if (detailHidden) detailHidden.value = detailLines.join(" / ");
 
   if (!allChosen) {
-    feeLine.textContent = "체크한 회차마다 신청 품목을 모두 선택해 주세요";
+    feeLine.textContent = "체크한 회차마다 신청 테이블을 모두 선택해 주세요";
     feeHidden.value = "";
     return;
   }
@@ -232,7 +232,7 @@ function updateRoundOptions(title) {
     const tableSelect = document.createElement("select");
     tableSelect.className = "round-table-select";
     tableSelect.style.display = "none";
-    tableSelect.innerHTML = `<option value="">품목 선택</option>
+    tableSelect.innerHTML = `<option value="">테이블 선택</option>
         <option value="기본 1500mm 테이블 1개">기본 1500mm 테이블 1개</option>
         <option value="기본 1500mm 테이블 2개">기본 1500mm 테이블 2개</option>
         <option value="행거 1000mm 2개">행거 1000mm 2개</option>
@@ -491,7 +491,7 @@ function setupApplyForm() {
         )
       : null;
     if (uncheckedTable) {
-      alert("체크한 회차마다 신청 품목(테이블/행거)을 선택해 주세요.");
+      alert("체크한 회차마다 신청 테이블/행거를 선택해 주세요.");
       uncheckedTable.querySelector(".round-table-select").focus();
       uncheckedTable.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
