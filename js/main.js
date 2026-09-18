@@ -100,17 +100,73 @@ let allEventsCache = [];
  * 선택한 행사(title)에 등록된 "회차 목록"으로 #round 셀렉트박스를 다시 채운다.
  * 회차가 하나도 등록 안 된 행사면, 회차 선택 없이 바로 진행 가능하게 만든다.
  */
+/**
+ * "기본 1500mm 테이블 2개" / "행거 1000mm 3개" 같은 문자열에서
+ * 종류(table/hanger)와 개수를 뽑아낸다.
+ */
+function parseTableSelection(value) {
+  if (!value) return null;
+  const hangerMatch = value.match(/행거.*?(\d+)\s*개/);
+  if (hangerMatch) return { type: "hanger", count: parseInt(hangerMatch[1], 10) };
+  const tableMatch = value.match(/테이블.*?(\d+)\s*개/);
+  if (tableMatch) return { type: "table", count: parseInt(tableMatch[1], 10) };
+  return null;
+}
+
+/**
+ * 참가비 안내문(예: "150,000원 (2일)")에서 "테이블 1개 기준 1회차당 단가"만 뽑아낸다.
+ * 행거는 테이블의 절반 단가로 자동 계산한다 (행거 2개 = 테이블 1개와 같은 자리를 차지하므로).
+ */
+function parseBaseUnitPrice(depositText) {
+  if (!depositText) return null;
+  const m = depositText.match(/([\d,]+)\s*원/);
+  if (!m) return null;
+  return parseInt(m[1].replace(/,/g, ""), 10);
+}
+
+/**
+ * 현재 선택된 "행사 + 회차(복수) + 테이블/행거 개수"를 종합해서
+ * 최종 참가비를 계산하고 화면(round-fee-line)과 전송용 hidden input에 반영한다.
+ */
+function recalcFee() {
+  const feeLine = document.getElementById("round-fee-line");
+  const feeHidden = document.getElementById("fee-hidden");
+  const hidden = document.getElementById("round-hidden");
+  const tablesSelect = document.getElementById("tables");
+  const eventSelect = document.getElementById("event");
+  if (!feeLine || !feeHidden) return;
+
+  const title = eventSelect ? eventSelect.value : "";
+  const ev = allEventsCache.find((e) => e.title === title);
+
+  const roundCount = hidden && hidden.value ? hidden.value.split("|||").filter((s) => s.trim()).length : 0;
+  const sel = tablesSelect ? parseTableSelection(tablesSelect.value) : null;
+  const unitPrice = ev ? parseBaseUnitPrice(ev.deposit) : null;
+
+  // 셋 중 하나라도 아직 안 정해졌으면 계산하지 않는다
+  if (!ev || roundCount === 0 || !sel || unitPrice === null) {
+    feeLine.textContent = "";
+    feeHidden.value = "";
+    return;
+  }
+
+  const hangerUnitPrice = unitPrice / 2;
+  const perRound = sel.type === "table" ? sel.count * unitPrice : sel.count * hangerUnitPrice;
+  const total = perRound * roundCount;
+  const totalText = `${total.toLocaleString()}원 (VAT별도)`;
+
+  feeLine.textContent = `참가비: ${totalText}`;
+  feeHidden.value = totalText;
+}
+
 function updateRoundOptions(title) {
   const container = document.getElementById("round-options");
   const hidden = document.getElementById("round-hidden");
-  const feeLine = document.getElementById("round-fee-line");
-  const feeHidden = document.getElementById("fee-hidden");
   if (!container) return;
 
   container.innerHTML = "";
   if (hidden) hidden.value = "";
-  if (feeLine) feeLine.textContent = "";
-  if (feeHidden) feeHidden.value = "";
+  recalcFee();
 
   const ev = allEventsCache.find((e) => e.title === title);
   const rounds = (ev && ev.rounds) || [];
@@ -123,8 +179,7 @@ function updateRoundOptions(title) {
   if (rounds.length === 0) {
     container.innerHTML = `<span class="round-empty">이 행사는 회차 구분이 없습니다</span>`;
     if (hidden) hidden.value = "회차 구분 없음";
-    if (feeLine) feeLine.textContent = ev && ev.deposit ? `참가비: ${ev.deposit}` : "";
-    if (feeHidden) feeHidden.value = (ev && ev.deposit) || "";
+    recalcFee();
     return;
   }
 
@@ -141,19 +196,25 @@ function updateRoundOptions(title) {
     container.appendChild(wrap);
   });
 
-  // 체크박스 상태가 바뀔 때마다, 선택된 값들을 hidden input에 합쳐서 넣어둔다 (Formspree 전송용)
   container.querySelectorAll(".round-checkbox").forEach((cb) => {
     cb.addEventListener("change", () => {
       const selected = Array.from(container.querySelectorAll(".round-checkbox:checked")).map((c) => c.value);
-      if (hidden) hidden.value = selected.join(", ");
-      if (selected.length > 0) {
-        if (feeLine) feeLine.textContent = ev && ev.deposit ? `참가비: ${ev.deposit}` : "";
-        if (feeHidden) feeHidden.value = (ev && ev.deposit) || "";
-      } else {
-        if (feeLine) feeLine.textContent = "";
-        if (feeHidden) feeHidden.value = "";
-      }
+      if (hidden) hidden.value = selected.join("|||");
+      recalcFee();
     });
+
+    // Formspree로 넘어가기 직전, 사람이 읽기 좋은 형태(쉼표+줄바꿈)로 실제 전송값을 바꿔치기
+    if (!container.dataset.submitHookAdded) {
+      container.dataset.submitHookAdded = "1";
+      const formEl = container.closest("form");
+      if (formEl) {
+        formEl.addEventListener("submit", () => {
+          if (hidden && hidden.value) {
+            hidden.value = hidden.value.split("|||").filter((s) => s.trim()).join(", ");
+          }
+        });
+      }
+    }
   });
 }
 
@@ -360,7 +421,12 @@ function setupApplyForm() {
   const success = document.getElementById("form-success");
   const select = document.getElementById("event");
   const label = document.getElementById("selected-event-label");
+  const tablesSelect = document.getElementById("tables");
   if (!form) return;
+
+  if (tablesSelect) {
+    tablesSelect.addEventListener("change", recalcFee);
+  }
 
   if (select && label) {
     select.addEventListener("change", () => {
