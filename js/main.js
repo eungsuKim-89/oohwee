@@ -33,7 +33,20 @@ async function renderGallery(targetId, limit, activeCategory) {
   const items = all.filter(
     (item) => !activeCategory || activeCategory === "전체" || item.category === activeCategory
   );
-  const shown = limit ? items.slice(0, limit) : items;
+
+  // 한 항목(item)에 사진이 여러 장(images 배열) 들어있을 수 있으므로,
+  // 사진 한 장 = 카드 한 장이 되도록 먼저 펼쳐준다 (기존 단일 image 필드도 함께 지원)
+  const flattened = [];
+  items.forEach((item) => {
+    const photos = Array.isArray(item.images) && item.images.length > 0
+      ? item.images
+      : (item.image ? [item.image] : []);
+    photos.forEach((src) => {
+      flattened.push({ src, caption: item.description || item.caption || "" });
+    });
+  });
+
+  const shown = limit ? flattened.slice(0, limit) : flattened;
 
   if (shown.length === 0) {
     el.innerHTML = `
@@ -46,11 +59,11 @@ async function renderGallery(targetId, limit, activeCategory) {
 
   el.innerHTML = shown
     .map(
-      (item) => `
+      (photo) => `
       <figure>
-        <a href="${item.image}" target="_blank" rel="noopener">
-          <img src="${item.image}" alt="${item.caption || ""}" loading="lazy" />
-          ${item.caption ? `<figcaption>${item.caption}</figcaption>` : ""}
+        <a href="${photo.src}" target="_blank" rel="noopener">
+          <img src="${photo.src}" alt="${photo.caption || ""}" loading="lazy" />
+          ${photo.caption ? `<figcaption>${photo.caption}</figcaption>` : ""}
         </a>
       </figure>`
     )
