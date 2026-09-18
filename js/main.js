@@ -84,6 +84,9 @@ const EVENTS_PER_PAGE = 10;
 let currentEventCategory = "전체";
 let currentEventPage = 1;
 
+const RECRUIT_CATEGORIES =
+  "핸드메이드 / 패션(잡화) / 의류(홈웨어, 남성복, 스포츠 기능성 의류 등도 가능) / 액세서리 / 팬시 / 리빙 / 친환경물품 / 반려동물 용품 / 먹거리(즉석 제조 제외) / 브랜드홍보 등 [※ 예외 품목도 협의 가능]";
+
 const STATIC_INFO = `
   <ul class="info-list">
     <li><span class="k">기본제공</span><span>1500mm 테이블 1개, 파라솔, 스트링 조명, 전기 (행거 사용 시 파라솔·조명만 제공)</span></li>
@@ -100,10 +103,14 @@ let allEventsCache = [];
 function updateRoundOptions(title) {
   const container = document.getElementById("round-options");
   const hidden = document.getElementById("round-hidden");
+  const feeLine = document.getElementById("round-fee-line");
+  const feeHidden = document.getElementById("fee-hidden");
   if (!container) return;
 
   container.innerHTML = "";
   if (hidden) hidden.value = "";
+  if (feeLine) feeLine.textContent = "";
+  if (feeHidden) feeHidden.value = "";
 
   const ev = allEventsCache.find((e) => e.title === title);
   const rounds = (ev && ev.rounds) || [];
@@ -116,6 +123,8 @@ function updateRoundOptions(title) {
   if (rounds.length === 0) {
     container.innerHTML = `<span class="round-empty">이 행사는 회차 구분이 없습니다</span>`;
     if (hidden) hidden.value = "회차 구분 없음";
+    if (feeLine) feeLine.textContent = ev && ev.deposit ? `참가비: ${ev.deposit}` : "";
+    if (feeHidden) feeHidden.value = (ev && ev.deposit) || "";
     return;
   }
 
@@ -137,6 +146,13 @@ function updateRoundOptions(title) {
     cb.addEventListener("change", () => {
       const selected = Array.from(container.querySelectorAll(".round-checkbox:checked")).map((c) => c.value);
       if (hidden) hidden.value = selected.join(", ");
+      if (selected.length > 0) {
+        if (feeLine) feeLine.textContent = ev && ev.deposit ? `참가비: ${ev.deposit}` : "";
+        if (feeHidden) feeHidden.value = (ev && ev.deposit) || "";
+      } else {
+        if (feeLine) feeLine.textContent = "";
+        if (feeHidden) feeHidden.value = "";
+      }
     });
   });
 }
@@ -195,6 +211,7 @@ async function renderEventList() {
           <div class="event-meta">
             <div><span class="k">PLACE</span>${ev.place}</div>
             <div><span class="k">FEE</span>${ev.deposit || "추후 안내"}</div>
+            <div><span class="k">CATEGORY</span>${RECRUIT_CATEGORIES}</div>
             ${ev.deadline ? `<div><span class="k">DEADLINE</span>${ev.deadline}까지</div>` : ""}
           </div>
           ${ev.note ? `<div class="event-note">${ev.note}</div>` : ""}
@@ -244,6 +261,12 @@ async function renderEventList() {
       const isOpen = detail.classList.contains("open");
       listContainer.querySelectorAll(".event-detail.open").forEach((d) => d.classList.remove("open"));
       listContainer.querySelectorAll(".event-header").forEach((h) => h.setAttribute("aria-expanded", "false"));
+
+      // 다른(또는 같은) 행사 카드를 열고닫을 때마다, 이전에 열려있던 신청서는 일단 닫아둔다
+      // (신청서는 오직 "신청하기" 버튼을 눌러야만 다시 뜬다)
+      const applySection = document.getElementById("apply-section");
+      if (applySection) applySection.style.display = "none";
+
       if (!isOpen) {
         detail.classList.add("open");
         header.setAttribute("aria-expanded", "true");
@@ -348,9 +371,22 @@ function setupApplyForm() {
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
+    // 필수 입력칸 검증 — 빠진 곳이 있으면 그 칸으로 바로 스크롤 + 포커스 이동
+    if (!form.checkValidity()) {
+      const invalid = form.querySelector(":invalid");
+      if (invalid) {
+        invalid.scrollIntoView({ behavior: "smooth", block: "center" });
+        invalid.focus({ preventScroll: true });
+      }
+      form.reportValidity();
+      return;
+    }
+
     const roundHidden = document.getElementById("round-hidden");
     if (roundHidden && !roundHidden.value) {
       alert("참여 회차를 1개 이상 선택해 주세요.");
+      const roundBox = document.getElementById("round-options");
+      if (roundBox) roundBox.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
 
