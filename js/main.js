@@ -468,6 +468,8 @@ function setupApplyForm() {
     });
   }
 
+  const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbzyaKc6RfvBl_BQX0tw0tnq1WXy-qN3eFRnAfqywYe6_9WhNAYXZ23AY21vjU3vx-1w/exec";
+
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
@@ -513,6 +515,17 @@ function setupApplyForm() {
         headers: { Accept: "application/json" },
       });
       if (res.ok) {
+        // 구글 스프레드시트로도 같은 내용을 함께 전송 (실패해도 신청 자체는 정상 처리)
+        try {
+          fetch(GAS_WEBAPP_URL, {
+            method: "POST",
+            body: data,
+            mode: "no-cors",
+          });
+        } catch (gasErr) {
+          console.error("구글시트 전송 실패", gasErr);
+        }
+
         form.style.display = "none";
         success.style.display = "block";
       } else {
