@@ -414,6 +414,8 @@ function renderCategoryFilters(el, events) {
     btn.addEventListener("click", () => {
       currentEventCategory = btn.dataset.category;
       currentEventPage = 1; // 카테고리 바꾸면 1페이지로 초기화
+      const applySection = document.getElementById("apply-section");
+      if (applySection) applySection.style.display = "none"; // 다른 카테고리로 넘어가면 이전 신청서는 닫아둔다
       renderEventList();
     });
   });
@@ -445,6 +447,8 @@ function renderPagination(el, totalPages) {
   pager.querySelectorAll(".page-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       currentEventPage = parseInt(btn.dataset.page, 10);
+      const applySection = document.getElementById("apply-section");
+      if (applySection) applySection.style.display = "none"; // 페이지 넘기면 이전 신청서는 닫아둔다
       renderEventList();
       el.scrollIntoView({ behavior: "smooth", block: "start" });
     });
