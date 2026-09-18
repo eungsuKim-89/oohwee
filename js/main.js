@@ -56,10 +56,10 @@ async function renderGallery(targetId, limit, activeCategory) {
   el.innerHTML = shown
     .map(
       (photo) => `
-      <figure>
-        ${photo.caption ? `<figcaption style="font-size:17px; font-weight:700; margin-bottom:10px; color:#1a1a1a;">${photo.caption}</figcaption>` : ""}
-        <a href="${photo.src}" target="_blank" rel="noopener">
+      <figure style="position:relative;">
+        <a href="${photo.src}" target="_blank" rel="noopener" style="position:relative; display:block;">
           <img src="${photo.src}" alt="${photo.caption || ""}" loading="lazy" />
+          ${photo.caption ? `<span style="position:absolute; top:12px; left:12px; background:#F2661D; color:#fff; font-size:13.5px; font-weight:700; padding:6px 13px; border-radius:20px; box-shadow:0 2px 8px rgba(0,0,0,0.25); line-height:1.3;">${photo.caption}</span>` : ""}
         </a>
       </figure>`
     )
