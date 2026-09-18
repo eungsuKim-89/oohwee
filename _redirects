@@ -1,0 +1,3 @@
+/reference   /reference.html   200
+/apply       /apply.html       200
+/admin/*     /admin/index.html 200
