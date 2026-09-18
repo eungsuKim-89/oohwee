@@ -1,3 +1,13 @@
 {
-  "items": []
+  "items": [
+    {
+      "images": [
+        "/images/uploads/문정1회-4.jpg",
+        "/images/uploads/문정1회-3.jpg",
+        "/images/uploads/문정1회-1.jpg"
+      ],
+      "category": "프리마켓",
+      "description": "문정 9월 프리마켓"
+    }
+  ]
 }
