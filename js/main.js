@@ -49,11 +49,7 @@ async function renderGallery(targetId, limit, activeCategory) {
   const shown = limit ? flattened.slice(0, limit) : flattened;
 
   if (shown.length === 0) {
-    el.innerHTML = `
-      <div class="gallery-empty">
-        아직 등록된 사진이 없습니다.<br />
-        관리자 페이지(/admin)에서 로그인 후 사진을 등록해 주세요.
-      </div>`;
+    el.innerHTML = `<div class="gallery-empty">업로드 대기중입니다.</div>`;
     return;
   }
 
@@ -61,9 +57,9 @@ async function renderGallery(targetId, limit, activeCategory) {
     .map(
       (photo) => `
       <figure>
+        ${photo.caption ? `<figcaption style="font-size:17px; font-weight:700; margin-bottom:10px; color:#1a1a1a;">${photo.caption}</figcaption>` : ""}
         <a href="${photo.src}" target="_blank" rel="noopener">
           <img src="${photo.src}" alt="${photo.caption || ""}" loading="lazy" />
-          ${photo.caption ? `<figcaption>${photo.caption}</figcaption>` : ""}
         </a>
       </figure>`
     )
