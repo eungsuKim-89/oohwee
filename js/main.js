@@ -10,6 +10,75 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
+function ensureLightbox() {
+  let box = document.getElementById("oohwee-lightbox");
+  if (box) return box;
+
+  box = document.createElement("div");
+  box.id = "oohwee-lightbox";
+  box.style.cssText = `
+    position: fixed; inset: 0; z-index: 9999; display: none;
+    background: rgba(0,0,0,0.9); align-items: center; justify-content: center;
+    flex-direction: column; padding: 24px; box-sizing: border-box;
+  `;
+  box.innerHTML = `
+    <button id="oohwee-lightbox-close" aria-label="닫기" style="
+      position: absolute; top: max(16px, env(safe-area-inset-top)); right: max(16px, env(safe-area-inset-right));
+      width: 44px; height: 44px; border-radius: 50%; border: none;
+      background: #ffffff; color: #1a1a1a; font-size: 20px; font-weight: 700;
+      cursor: pointer; line-height: 1; -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation; z-index: 2; box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+    ">✕</button>
+    <img id="oohwee-lightbox-img" src="" alt="" style="
+      max-width: 88vw; max-height: 65vh; object-fit: contain; border-radius: 6px;
+      touch-action: pinch-zoom; cursor: pointer;
+    " />
+    <div id="oohwee-lightbox-caption" style="
+      color: #fff; font-size: 15px; font-weight: 700; margin-top: 14px; text-align: center;
+      padding: 0 16px;
+    "></div>
+    <div style="color: rgba(255,255,255,0.55); font-size: 12.5px; margin-top: 18px;">사진을 누르면 닫혀요</div>
+  `;
+  document.body.appendChild(box);
+
+  // 모바일에서 라이트박스 열려있는 동안 뒷배경이 같이 스크롤되지 않도록 잠금/해제
+  let savedScrollY = 0;
+  const close = () => {
+    box.style.display = "none";
+    document.body.style.position = "";
+    document.body.style.top = "";
+    document.body.style.width = "";
+    document.body.style.overflow = "";
+    window.scrollTo(0, savedScrollY);
+  };
+  box.addEventListener("click", (e) => {
+    // 배경(어두운 영역) 또는 사진 자체를 탭/클릭해도 닫히게 — X버튼을 굳이 못 찾아도 됨
+    if (e.target === box || e.target.id === "oohwee-lightbox-img") close();
+  });
+  box.querySelector("#oohwee-lightbox-close").addEventListener("click", close);
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && box.style.display !== "none") close();
+  });
+
+  box._lock = () => {
+    savedScrollY = window.scrollY;
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${savedScrollY}px`;
+    document.body.style.width = "100%";
+    document.body.style.overflow = "hidden";
+  };
+
+  return box;
+}
+
+function openLightbox(src, caption) {
+  const box = ensureLightbox();
+  box.querySelector("#oohwee-lightbox-img").src = src;
+  box.querySelector("#oohwee-lightbox-caption").textContent = caption || "";
+  box.style.display = "flex";
+  box._lock();
+}
+
 async function loadJSON(path) {
   try {
     const res = await fetch(path, { cache: "no-store" });
@@ -57,13 +126,19 @@ async function renderGallery(targetId, limit, activeCategory) {
     .map(
       (photo) => `
       <figure style="position:relative; margin:0; aspect-ratio:1/1; overflow:hidden; border-radius:10px;">
-        <a href="${photo.src}" target="_blank" rel="noopener" style="position:relative; display:block; width:100%; height:100%;">
+        <div class="gallery-clickable" data-src="${photo.src}" data-caption="${(photo.caption || "").replace(/"/g, "&quot;")}" style="position:relative; display:block; width:100%; height:100%; cursor:pointer;">
           <img src="${photo.src}" alt="${photo.caption || ""}" loading="lazy" style="width:100%; height:100%; object-fit:cover; display:block;" />
           ${photo.caption ? `<span style="position:absolute; top:12px; left:12px; background:#F2661D; color:#fff; font-size:13.5px; font-weight:700; padding:6px 13px; border-radius:20px; box-shadow:0 2px 8px rgba(0,0,0,0.25); line-height:1.3;">${photo.caption}</span>` : ""}
-        </a>
+        </div>
       </figure>`
     )
     .join("");
+
+  el.querySelectorAll(".gallery-clickable").forEach((elm) => {
+    elm.addEventListener("click", () => {
+      openLightbox(elm.dataset.src, elm.dataset.caption);
+    });
+  });
 }
 
 function setupFilters(buttonSelector, targetId) {
