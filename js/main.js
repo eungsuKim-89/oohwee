@@ -259,7 +259,7 @@ function recalcFee() {
     detailLines.push(`${roundName}: ${tableValue}`);
   });
 
-  if (hidden) hidden.value = roundNames.join(", ");
+  if (hidden) hidden.value = roundNames.join(" | ");
   if (detailHidden) detailHidden.value = detailLines.join(" / ");
 
   if (!allChosen) {
