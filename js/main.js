@@ -539,12 +539,49 @@ function renderPagination(el, totalPages) {
   });
 }
 
+/**
+ * 연락처(휴대폰) 자동 하이픈: 010-0000-0000 (10자리면 010-000-0000)
+ */
+function formatPhoneNumber(digits) {
+  digits = digits.slice(0, 11);
+  if (digits.length < 4) return digits;
+  if (digits.length <= 10) {
+    return digits.slice(0, 3) + "-" + digits.slice(3, 6) + "-" + digits.slice(6);
+  }
+  return digits.slice(0, 3) + "-" + digits.slice(3, 7) + "-" + digits.slice(7, 11);
+}
+
+/**
+ * 사업자번호 자동 하이픈: 000-00-00000
+ */
+function formatBizNo(digits) {
+  digits = digits.slice(0, 10);
+  if (digits.length < 4) return digits;
+  if (digits.length < 6) return digits.slice(0, 3) + "-" + digits.slice(3);
+  return digits.slice(0, 3) + "-" + digits.slice(3, 5) + "-" + digits.slice(5);
+}
+
+/**
+ * 입력창에 숫자를 치면 실시간으로 하이픈을 자동으로 끼워주는 공통 함수
+ */
+function attachAutoHyphen(inputEl, formatFn) {
+  if (!inputEl) return;
+  inputEl.setAttribute("inputmode", "numeric");
+  inputEl.addEventListener("input", () => {
+    const digitsOnly = inputEl.value.replace(/\D/g, "");
+    inputEl.value = formatFn(digitsOnly);
+  });
+}
+
 function setupApplyForm() {
   const form = document.getElementById("apply-form");
   const success = document.getElementById("form-success");
   const select = document.getElementById("event");
   const label = document.getElementById("selected-event-label");
   if (!form) return;
+
+  attachAutoHyphen(document.getElementById("phone"), formatPhoneNumber);
+  attachAutoHyphen(document.getElementById("bizno"), formatBizNo);
 
   if (select && label) {
     select.addEventListener("change", () => {
