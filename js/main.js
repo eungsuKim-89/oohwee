@@ -462,6 +462,18 @@ async function renderEventList() {
       updateRoundOptions(title);
       const label = document.getElementById("selected-event-label");
       if (label) label.textContent = `선택한 행사: ${title}`;
+
+      // 이전에 한 번 제출했었더라도, 새로 "신청하기"를 누르면 항상 깨끗한 새 폼이 보이게 함
+      const form = document.getElementById("apply-form");
+      const success = document.getElementById("form-success");
+      if (form) {
+        form.reset();
+        form.style.display = "";
+      }
+      if (success) success.style.display = "none";
+      const roundFeeLine = document.getElementById("round-fee-line");
+      if (roundFeeLine) roundFeeLine.textContent = "";
+
       const applySection = document.getElementById("apply-section");
       applySection.style.display = "block";
       applySection.scrollIntoView({ behavior: "smooth", block: "start" });
