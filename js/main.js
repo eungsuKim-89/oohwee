@@ -605,7 +605,7 @@ function setupApplyForm() {
     });
   }
 
-  const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbzNjRfz9Tl6T6ySLvNP4fj9lyGvevYvjuEUYLOgFHEQZBKQuIZrocoSIwWBaRfwzbx6/exec";
+  const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbycGhDaYDVfNB-Dnn9DdVLVf41tJiO2xjIy9b_GhhOpMIOoF-00VxCK2TE6fQtRTgc/exec";
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
