@@ -568,8 +568,24 @@ function attachAutoHyphen(inputEl, formatFn) {
   if (!inputEl) return;
   inputEl.setAttribute("inputmode", "numeric");
   inputEl.addEventListener("input", () => {
-    const digitsOnly = inputEl.value.replace(/\D/g, "");
-    inputEl.value = formatFn(digitsOnly);
+    const cursorPos = inputEl.selectionStart ?? inputEl.value.length;
+    const oldValue = inputEl.value;
+
+    // 커서 바로 앞까지 숫자가 몇 개였는지 세어둔다 (하이픈 재배치 후에도 같은 위치를 유지하기 위함)
+    const digitsBeforeCursor = oldValue.slice(0, cursorPos).replace(/\D/g, "").length;
+
+    const digitsOnly = oldValue.replace(/\D/g, "");
+    const newValue = formatFn(digitsOnly);
+    inputEl.value = newValue;
+
+    // 새로 포맷된 값에서, 숫자 개수 기준으로 커서가 있어야 할 위치를 다시 찾아 이동
+    let newPos = 0;
+    let digitCount = 0;
+    while (newPos < newValue.length && digitCount < digitsBeforeCursor) {
+      if (/\d/.test(newValue[newPos])) digitCount++;
+      newPos++;
+    }
+    inputEl.setSelectionRange(newPos, newPos);
   });
 }
 
