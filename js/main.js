@@ -99,9 +99,11 @@ async function renderGallery(targetId, limit, activeCategory) {
   if (!el) return;
 
   const all = await loadJSON("data/reference.json");
-  const items = all.filter(
-    (item) => !activeCategory || activeCategory === "전체" || item.category === activeCategory
-  );
+  // 관리자 화면(Decap)은 새로 올린 항목을 목록 맨 아래에 추가하므로,
+  // 순서를 뒤집어서 가장 최근에 올린 항목이 맨 위(홈 화면에서는 맨 앞)에 오게 한다
+  const items = all
+    .filter((item) => !activeCategory || activeCategory === "전체" || item.category === activeCategory)
+    .reverse();
 
   // 한 항목(item)에 사진이 여러 장(images 배열) 들어있을 수 있으므로,
   // 사진 한 장 = 카드 한 장이 되도록 먼저 펼쳐준다 (기존 단일 image 필드도 함께 지원)
