@@ -189,6 +189,10 @@ const STATIC_CONTACT_ONLY = `
 
 let allEventsCache = [];
 
+function escapeHtml(str) {
+  return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
 /**
  * 행사에 등록된 "부스 옵션 + 금액"을 정리해서 돌려준다. (없으면 빈 배열 = 기존 테이블/행거 방식)
  */
@@ -438,9 +442,12 @@ async function renderEventList() {
       const boothRow = boothOpts.length > 0
         ? `<div><span class="k">BOOTH</span>${boothOpts.map((o) => `${o.label} ${o.price.toLocaleString()}원`).join(" / ")}</div>`
         : "";
-      const categoryRow = ev.hide_default_info
-        ? ""
-        : `<div><span class="k">CATEGORY</span>${RECRUIT_CATEGORIES}</div>`;
+      const customCategories = String(ev.recruit_categories ?? "").trim();
+      const categoryRow = customCategories
+        ? `<div><span class="k">CATEGORY</span>${escapeHtml(customCategories).replace(/\n/g, "<br>")}</div>`
+        : ev.hide_default_info
+          ? ""
+          : `<div><span class="k">CATEGORY</span>${RECRUIT_CATEGORIES}</div>`;
       const infoBlock = ev.hide_default_info ? STATIC_CONTACT_ONLY : STATIC_INFO;
       return `
       <div class="event-card">
