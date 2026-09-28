@@ -178,7 +178,43 @@ const STATIC_INFO = `
     <li><span class="k">문의</span><span>theysayoohwee@gmail.com (문의 시 업체명·판매 품목을 함께 적어주세요)</span></li>
   </ul>`;
 
+// 행사에 별도 시트 주소가 없을 때 쓰는 기본(문정) 구글시트 연동 주소
+const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbycGhDaYDVfNB-Dnn9DdVLVf41tJiO2xjIy9b_GhhOpMIOoF-00VxCK2TE6fQtRTgc/exec";
+
+// "기본 안내 숨기기"를 켠 행사(체험부스 등)에 보여줄 문의 안내
+const STATIC_CONTACT_ONLY = `
+  <ul class="info-list">
+    <li><span class="k">문의</span><span>theysayoohwee@gmail.com (문의 시 업체명·신청 내용을 함께 적어주세요)</span></li>
+  </ul>`;
+
 let allEventsCache = [];
+
+/**
+ * 행사에 등록된 "부스 옵션 + 금액"을 정리해서 돌려준다. (없으면 빈 배열 = 기존 테이블/행거 방식)
+ */
+function getBoothOptions(ev) {
+  if (!ev || !Array.isArray(ev.booth_options)) return [];
+  const result = [];
+  ev.booth_options.forEach((o) => {
+    const label = String((o && o.label) || "").trim();
+    const digits = String((o && o.price) ?? "").replace(/[^\d]/g, "");
+    if (label && digits) result.push({ label, price: parseInt(digits, 10) });
+  });
+  return result;
+}
+
+/**
+ * 신청 내용을 보낼 구글시트(Apps Script) 주소를 정한다.
+ * - 행사에 주소가 있으면 그 주소, 없으면 기본(문정) 주소
+ * - 주소를 적었는데 형식이 틀리면 잘못된 시트로 가지 않도록 시트 전송을 건너뛴다(null)
+ */
+function resolveSheetUrl(ev) {
+  const custom = ev && typeof ev.sheet_url === "string" ? ev.sheet_url.trim() : "";
+  if (!custom) return DEFAULT_GAS_URL;
+  if (/^https:\/\/script\.google\.com\/macros\/s\/[^\s]+\/exec$/.test(custom)) return custom;
+  console.error("시트 연동 주소 형식이 올바르지 않아 시트 전송을 건너뜁니다:", custom);
+  return null;
+}
 
 /**
  * 선택한 행사(title)에 등록된 "회차 목록"으로 #round 셀렉트박스를 다시 채운다.
@@ -223,13 +259,15 @@ function recalcFee() {
 
   const title = eventSelect ? eventSelect.value : "";
   const ev = allEventsCache.find((e) => e.title === title);
-  const unitPrice = ev ? parseBaseUnitPrice(ev.deposit) : null;
+  const boothOptions = getBoothOptions(ev);
+  const useOptions = boothOptions.length > 0;
+  const unitPrice = ev && !useOptions ? parseBaseUnitPrice(ev.deposit) : null;
 
   const checkedRows = Array.from(container.querySelectorAll(".round-row")).filter(
     (row) => row.querySelector(".round-checkbox").checked
   );
 
-  if (!ev || unitPrice === null || checkedRows.length === 0) {
+  if (!ev || (!useOptions && unitPrice === null) || checkedRows.length === 0) {
     feeLine.textContent = "";
     feeHidden.value = "";
     if (detailHidden) detailHidden.value = "";
@@ -237,7 +275,7 @@ function recalcFee() {
     return;
   }
 
-  const hangerUnitPrice = unitPrice / 2;
+  const hangerUnitPrice = unitPrice !== null ? unitPrice / 2 : 0;
   let total = 0;
   let allChosen = true;
   const roundNames = [];
@@ -248,6 +286,17 @@ function recalcFee() {
     roundNames.push(roundName);
     const tableSelect = row.querySelector(".round-table-select");
     const tableValue = tableSelect ? tableSelect.value : "";
+    if (useOptions) {
+      const opt = boothOptions.find((o) => o.label === tableValue);
+      if (!opt) {
+        allChosen = false;
+        detailLines.push(`${roundName}: (부스 미선택)`);
+        return;
+      }
+      total += opt.price;
+      detailLines.push(`${roundName}: ${opt.label} (${opt.price.toLocaleString()}원)`);
+      return;
+    }
     const sel = parseTableSelection(tableValue);
     if (!sel) {
       allChosen = false;
@@ -263,7 +312,7 @@ function recalcFee() {
   if (detailHidden) detailHidden.value = detailLines.join(" / ");
 
   if (!allChosen) {
-    feeLine.textContent = "체크한 회차마다 신청 테이블을 모두 선택해 주세요";
+    feeLine.textContent = useOptions ? "체크한 회차마다 부스를 모두 선택해 주세요" : "체크한 회차마다 신청 테이블을 모두 선택해 주세요";
     feeHidden.value = "";
     return;
   }
@@ -283,6 +332,7 @@ function updateRoundOptions(title) {
 
   const ev = allEventsCache.find((e) => e.title === title);
   const rounds = (ev && ev.rounds) || [];
+  const boothOptions = getBoothOptions(ev);
 
   if (!title) {
     container.innerHTML = `<span class="round-empty">먼저 위에서 행사를 선택해 주세요</span>`;
@@ -316,12 +366,19 @@ function updateRoundOptions(title) {
     const tableSelect = document.createElement("select");
     tableSelect.className = "round-table-select";
     tableSelect.style.display = "none";
-    tableSelect.innerHTML = `<option value="">테이블 선택</option>
+    if (boothOptions.length > 0) {
+      tableSelect.appendChild(new Option("부스 선택", ""));
+      boothOptions.forEach((o) => {
+        tableSelect.appendChild(new Option(`${o.label} — ${o.price.toLocaleString()}원`, o.label));
+      });
+    } else {
+      tableSelect.innerHTML = `<option value="">테이블 선택</option>
         <option value="기본 1500mm 테이블 1개">기본 1500mm 테이블 1개</option>
         <option value="기본 1500mm 테이블 2개">기본 1500mm 테이블 2개</option>
         <option value="행거 1000mm 2개">행거 1000mm 2개</option>
         <option value="행거 1000mm 3개">행거 1000mm 3개</option>
         <option value="행거 1000mm 4개">행거 1000mm 4개</option>`;
+    }
     row.appendChild(tableSelect);
 
     container.appendChild(row);
@@ -377,6 +434,14 @@ async function renderEventList() {
       const i = events.indexOf(ev);
       const statusClass = STATUS_CLASS[ev.status] || "upcoming";
       const closed = ev.status === "마감";
+      const boothOpts = getBoothOptions(ev);
+      const boothRow = boothOpts.length > 0
+        ? `<div><span class="k">BOOTH</span>${boothOpts.map((o) => `${o.label} ${o.price.toLocaleString()}원`).join(" / ")}</div>`
+        : "";
+      const categoryRow = ev.hide_default_info
+        ? ""
+        : `<div><span class="k">CATEGORY</span>${RECRUIT_CATEGORIES}</div>`;
+      const infoBlock = ev.hide_default_info ? STATIC_CONTACT_ONLY : STATIC_INFO;
       return `
       <div class="event-card">
         <button type="button" class="event-header" data-idx="${i}" aria-expanded="false">
@@ -391,11 +456,12 @@ async function renderEventList() {
           <div class="event-meta">
             <div><span class="k">PLACE</span>${ev.place}</div>
             <div><span class="k">FEE</span>${ev.deposit || "추후 안내"}</div>
-            <div><span class="k">CATEGORY</span>${RECRUIT_CATEGORIES}</div>
+            ${boothRow}
+            ${categoryRow}
             ${ev.deadline ? `<div><span class="k">DEADLINE</span>${ev.deadline}까지</div>` : ""}
           </div>
-          ${ev.note ? `<div class="event-note">${ev.note}</div>` : ""}
-          ${STATIC_INFO}
+          ${ev.note ? `<div class="event-note">${String(ev.note).replace(/\n/g, "<br>")}</div>` : ""}
+          ${infoBlock}
           <button class="btn" type="button" data-event-title="${ev.title}" ${closed ? "disabled" : ""}>
             ${closed ? "모집 마감" : "신청하기"}
           </button>
@@ -617,8 +683,6 @@ function setupApplyForm() {
     });
   }
 
-  const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbycGhDaYDVfNB-Dnn9DdVLVf41tJiO2xjIy9b_GhhOpMIOoF-00VxCK2TE6fQtRTgc/exec";
-
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
@@ -646,7 +710,9 @@ function setupApplyForm() {
         )
       : null;
     if (uncheckedTable) {
-      alert("체크한 회차마다 신청 테이블/행거를 선택해 주세요.");
+      const chosenEv = allEventsCache.find((ev) => ev.title === (select ? select.value : ""));
+      const kind = getBoothOptions(chosenEv).length > 0 ? "부스" : "테이블/행거";
+      alert(`체크한 회차마다 신청 ${kind}를 선택해 주세요.`);
       uncheckedTable.querySelector(".round-table-select").focus();
       uncheckedTable.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
@@ -666,11 +732,15 @@ function setupApplyForm() {
       if (res.ok) {
         // 구글 스프레드시트로도 같은 내용을 함께 전송 (실패해도 신청 자체는 정상 처리)
         try {
-          fetch(GAS_WEBAPP_URL, {
-            method: "POST",
-            body: data,
-            mode: "no-cors",
-          });
+          const sentEvent = allEventsCache.find((ev) => ev.title === (select ? select.value : ""));
+          const sheetUrl = resolveSheetUrl(sentEvent);
+          if (sheetUrl) {
+            fetch(sheetUrl, {
+              method: "POST",
+              body: data,
+              mode: "no-cors",
+            }).catch((err) => console.error("구글시트 전송 실패", err));
+          }
         } catch (gasErr) {
           console.error("구글시트 전송 실패", gasErr);
         }
