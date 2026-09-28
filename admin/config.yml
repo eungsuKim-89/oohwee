@@ -60,6 +60,11 @@ collections:
                     widget: "number"
                     value_type: "int"
                     min: 0
+              - label: "모집분야 (선택)"
+                name: "recruit_categories"
+                widget: "text"
+                required: false
+                hint: "비워두면 기본 문구(핸드메이드 / 패션 / 의류 / 액세서리 / 팬시 / 리빙 ...)가 그대로 표시돼요. 이 행사만 다르게 보여주고 싶을 때 입력하세요. 줄바꿈도 그대로 표시됩니다."
               - label: "마감일안내"
                 name: "deadline"
                 widget: "string"
