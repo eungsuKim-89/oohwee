@@ -44,14 +44,42 @@ collections:
               - label: "구좌비안내"
                 name: "deposit"
                 widget: "string"
+                hint: "카드에 그대로 보이는 안내 문구예요. 일반 셀러 행사는 여기 적은 첫 금액(예: 150,000원)이 '기본 테이블 1개' 단가로 자동 계산에 쓰입니다"
+              - label: "부스 옵션 (선택)"
+                name: "booth_options"
+                widget: "list"
+                required: false
+                hint: "체험부스처럼 금액이 다른 행사만 입력하세요. 여기에 적은 옵션이 신청서 드롭다운과 합계 계산에 그대로 쓰입니다. 비워두면 기존 방식(기본 테이블/행거 + 구좌비안내 금액)으로 동작해요. 금액은 '회차 1개당' 금액이에요."
+                fields:
+                  - label: "부스 이름"
+                    name: "label"
+                    widget: "string"
+                    hint: "예: 체험부스 소형(3x3m)"
+                  - label: "회차당 금액(원, 숫자만)"
+                    name: "price"
+                    widget: "number"
+                    value_type: "int"
+                    min: 0
               - label: "마감일안내"
                 name: "deadline"
                 widget: "string"
                 required: false
               - label: "한줄설명"
                 name: "note"
+                widget: "text"
+                required: false
+                hint: "여러 줄로 적어도 줄바꿈 그대로 표시돼요 (체험부스 제공사항·조건 안내 등)"
+              - label: "기본 안내 숨기기 (기본제공·개별지참·모집분야)"
+                name: "hide_default_info"
+                widget: "boolean"
+                default: false
+                required: false
+                hint: "체험부스처럼 일반 셀러용 안내(테이블·파라솔 제공, 모집분야)가 맞지 않을 때 켜세요. 필요한 안내는 '한줄설명'에 적어주세요."
+              - label: "구글시트 연동 주소 (선택)"
+                name: "sheet_url"
                 widget: "string"
                 required: false
+                hint: "이 행사 신청을 별도 스프레드시트로 받을 때만 입력. Apps Script 웹앱 URL(https://script.google.com/macros/s/.../exec). 비워두면 기존(문정) 시트로 들어갑니다."
               - label: "모집 상태"
                 name: "status"
                 widget: "select"
