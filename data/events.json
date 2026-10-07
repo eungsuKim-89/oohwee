@@ -29,56 +29,6 @@
       "recruit_categories": "의류(여성, 남성, 브랜드, 빈티지, 홈웨어, 기능성) / 패션 잡화 / 액세서리 / 뷰티·향기 / 키즈·베이비 / 핸드메이드 / 리빙 / 팬시 / 친환경 물품 / 차량용품 / 반려동물 용품 / 반려식물·플랜테리어(다육이, 화분 등) / 먹거리(즉석 제조 제외) / 주류(위스키 제외) / 체험 및 브랜드 홍보 등 [※ 예외 품목도 협의 가능]",
       "category": "송파구 문정",
       "deposit": "150,000원 (2일) vat별도"
-    },
-    {
-      "rounds": [
-        "1차 : 10.30~11.01 (금,토,일)"
-      ],
-      "place": "동탄 카림애비뉴2차",
-      "sheet_url": "https://script.google.com/macros/s/AKfycbwtZNLJGSxl4xvOkWkNFCIvBC2pBpahENEHB1k5GnMfIM64jWncUDunaIomp2KEhmL_HQ/exec",
-      "note": "행사시간 11:00~20:00 / 주차비 : 브랜드별 1대 무료 지원 / 1일 신청시 1일당 90,000원(vat별도)",
-      "status": "모집중",
-      "booth_options": [],
-      "title": "[셀러] 동탄 카림애비뉴 10월 할러윈축제",
-      "deadline": "선착순 마감",
-      "id": "carim",
-      "recruit_categories": "의류(여성, 남성, 브랜드, 빈티지, 홈웨어, 기능성) / 패션 잡화 / 액세서리 / 뷰티·향기 / 키즈·베이비 / 핸드메이드 / 리빙 / 팬시 / 친환경 물품 / 차량용품 / 반려동물 용품 / 반려식물·플랜테리어(다육이, 화분 등) / 먹거리(즉석 제조 제외) / 주류(위스키 제외) / 체험 및 브랜드 홍보 등 [※ 예외 품목도 협의 가능]",
-      "category": "동탄 카림애비뉴",
-      "deposit": "250,000원 (3일) vat별도"
-    },
-    {
-      "rounds": [
-        "1차 : 10.30~11.01 (금,토,일)"
-      ],
-      "place": "※ 순수 체험 구좌만 신청 가능 판매체험 구좌는 셀러로 신청",
-      "hide_default_info": false,
-      "sheet_url": "https://script.google.com/macros/s/AKfycbwtZNLJGSxl4xvOkWkNFCIvBC2pBpahENEHB1k5GnMfIM64jWncUDunaIomp2KEhmL_HQ/exec",
-      "note": "행사시간 11:00~20:00 / 주차비 : 1일 10,000원 / 1일 신청시 1일당 50,000원(vat별도)",
-      "status": "모집중",
-      "booth_options": [
-        {
-          "label": "체험 1500mm 테이블1개",
-          "price": 125000
-        },
-        {
-          "label": "체험 1500mm 테이블2개",
-          "price": 250000
-        },
-        {
-          "label": "체험 1500mm 테이블3개",
-          "price": 375000
-        },
-        {
-          "label": "체험 1500mm 테이블4개",
-          "price": 500000
-        }
-      ],
-      "title": "[체험] 동탄 카림애비뉴 10월 할러윈축제",
-      "deadline": "선착순 마감",
-      "id": "carim",
-      "recruit_categories": "다양한 체험클래스 모집",
-      "category": "동탄 카림애비뉴",
-      "deposit": "125,000원 (3일) vat별도"
     }
   ]
 }
