@@ -258,11 +258,13 @@ function parseBaseUnitPrice(depositText) {
  * 회차별로 각각 계산한 금액을 합산한다. (회차마다 다른 테이블 신청 가능)
  * 회차에 개별 단가(round_price)가 설정돼 있으면 그 금액을, 없으면 행사 전체 단가를 쓴다.
  * 행거는 해당 단가의 절반으로 자동 계산한다 (행거 2개 = 테이블 1개와 같은 자리를 차지하므로).
+ * 회차별 금액은 roundAmounts에 따로 모아서 구글시트 쪽(Code.gs)이 회차마다 금액을 나눠 기록할 수 있게 넘겨준다.
  */
 function recalcFee() {
   const feeLine = document.getElementById("round-fee-line");
   const feeHidden = document.getElementById("fee-hidden");
   const detailHidden = document.getElementById("round-detail-hidden");
+  const amountsHidden = document.getElementById("round-amount-hidden");
   const hidden = document.getElementById("round-hidden");
   const eventSelect = document.getElementById("event");
   const container = document.getElementById("round-options");
@@ -282,6 +284,7 @@ function recalcFee() {
     feeLine.textContent = "";
     feeHidden.value = "";
     if (detailHidden) detailHidden.value = "";
+    if (amountsHidden) amountsHidden.value = "";
     if (hidden) hidden.value = "";
     return;
   }
@@ -290,6 +293,7 @@ function recalcFee() {
   let allChosen = true;
   const roundNames = [];
   const detailLines = [];
+  const roundAmounts = {};
 
   checkedRows.forEach((row) => {
     const roundName = row.querySelector(".round-checkbox").value;
@@ -304,6 +308,7 @@ function recalcFee() {
         return;
       }
       total += opt.price;
+      roundAmounts[roundName] = opt.price;
       detailLines.push(`${roundName}: ${opt.label} (${opt.price.toLocaleString()}원)`);
       return;
     }
@@ -318,6 +323,7 @@ function recalcFee() {
     const roundHangerPrice = roundUnitPrice !== null ? roundUnitPrice / 2 : 0;
     const perRound = sel.type === "table" ? sel.count * roundUnitPrice : sel.count * roundHangerPrice;
     total += perRound;
+    roundAmounts[roundName] = perRound;
     detailLines.push(`${roundName}: ${tableValue}`);
   });
 
@@ -327,8 +333,11 @@ function recalcFee() {
   if (!allChosen) {
     feeLine.textContent = useOptions ? "체크한 회차마다 부스를 모두 선택해 주세요" : "체크한 회차마다 신청 테이블을 모두 선택해 주세요";
     feeHidden.value = "";
+    if (amountsHidden) amountsHidden.value = "";
     return;
   }
+
+  if (amountsHidden) amountsHidden.value = JSON.stringify(roundAmounts);
 
   const totalText = `${total.toLocaleString()}원 (VAT별도)`;
   feeLine.textContent = `참가비: ${totalText} — ${detailLines.join(" / ")}`;
