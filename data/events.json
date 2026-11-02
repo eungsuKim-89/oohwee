@@ -1,6 +1,12 @@
 {
   "items": [
     {
+      "default_items": [
+        "1500mm 테이블 1개",
+        "파라솔",
+        "스트링 조명",
+        "전기"
+      ],
       "place": "문정 운동정원광장 웨이브테라스(스포츠가든)",
       "price": "50,000",
       "date": "9.10~11(목·금)",
@@ -9,15 +15,36 @@
       "title": "문정 메인스트리트 9월 프리마켓",
       "id": "moonjeong-2026-09",
       "category": "송파구 문정",
-      "deposit": "1자리 1일 50,000원 / 2일 100,000원 (VAT 별도) · 오픈 기념 특가",
-      "default_items": ["1500mm 테이블 1개", "파라솔", "스트링 조명", "전기"]
+      "deposit": "1자리 1일 50,000원 / 2일 100,000원 (VAT 별도) · 오픈 기념 특가"
     },
     {
+      "default_items": [
+        "1500mm 테이블 1개",
+        "파라솔",
+        "스트링 조명",
+        "전기"
+      ],
       "rounds": [
-        { "round_name": "1차 : 10.01~10.02 (목,금)", "closed": false, "round_price": "" },
-        { "round_name": "2차 : 10.13~10.14 (화,수)", "closed": false, "round_price": "" },
-        { "round_name": "3차 : 10.21~10.22 (수,목)", "closed": false, "round_price": "" },
-        { "round_name": "4차 : 10.28~10.29 (수,목)", "closed": false, "round_price": "" }
+        {
+          "round_name": "1차 : 10.01~10.02 (목,금)",
+          "closed": false,
+          "round_price": ""
+        },
+        {
+          "round_name": "2차 : 10.13~10.14 (화,수)",
+          "closed": false,
+          "round_price": ""
+        },
+        {
+          "round_name": "3차 : 10.21~10.22 (수,목)",
+          "closed": false,
+          "round_price": ""
+        },
+        {
+          "round_name": "4차 : 10.28~10.29 (수,목)",
+          "closed": false,
+          "round_price": ""
+        }
       ],
       "place": "문정 운동정원광장 웨이브테라스(스포츠가든)",
       "price": "150,000 (2일)",
@@ -29,15 +56,36 @@
       "id": "moonjeong-2026-10",
       "recruit_categories": "의류(여성, 남성, 브랜드, 빈티지, 홈웨어, 기능성) / 패션 잡화 / 액세서리 / 뷰티·향기 / 키즈·베이비 / 핸드메이드 / 리빙 / 팬시 / 친환경 물품 / 차량용품 / 반려동물 용품 / 반려식물·플랜테리어(다육이, 화분 등) / 먹거리(즉석 제조 제외) / 주류(위스키 제외) / 체험 및 브랜드 홍보 등 [※ 예외 품목도 협의 가능]",
       "category": "송파구 문정",
-      "deposit": "150,000원 (2일) vat별도",
-      "default_items": ["1500mm 테이블 1개", "파라솔", "스트링 조명", "전기"]
+      "deposit": "150,000원 (2일) vat별도"
     },
     {
+      "default_items": [
+        "1500mm 테이블 1개",
+        "파라솔",
+        "스트링 조명",
+        "전기"
+      ],
       "rounds": [
-        { "round_name": "1차 : 11.03~11.05 (화,수,목)", "closed": true, "round_price": "150,000원 (3일)" },
-        { "round_name": "2차 : 11.10~11.12 (화,수,목)", "closed": false, "round_price": "" },
-        { "round_name": "3차 : 11.17~11.19 (화,수,목)", "closed": false, "round_price": "" },
-        { "round_name": "4차 : 11.24~11.26 (화,수,목)", "closed": false, "round_price": "" }
+        {
+          "round_name": "1차 : 11.03~11.05 (화,수,목)",
+          "closed": true,
+          "round_price": "150,000원 (3일)"
+        },
+        {
+          "round_name": "2차 : 11.10~11.12 (화,수,목)",
+          "closed": false,
+          "round_price": "100,000원 (3일)"
+        },
+        {
+          "round_name": "3차 : 11.17~11.19 (화,수,목)",
+          "closed": false,
+          "round_price": "100,000원 (3일)"
+        },
+        {
+          "round_name": "4차 : 11.24~11.26 (화,수,목)",
+          "closed": false,
+          "round_price": "100,000원 (3일)"
+        }
       ],
       "place": "문정 운동정원광장 웨이브테라스(스포츠가든)",
       "hide_default_info": false,
@@ -48,8 +96,7 @@
       "id": "moonjeong-2026-11",
       "recruit_categories": "의류(여성, 남성, 브랜드, 빈티지, 홈웨어, 기능성) / 패션 잡화 / 액세서리 / 뷰티·향기 / 키즈·베이비 / 핸드메이드 / 리빙 / 팬시 / 친환경 물품 / 차량용품 / 반려동물 용품 / 반려식물·플랜테리어(다육이, 화분 등) / 먹거리(즉석 제조 제외) / 주류(위스키 제외) / 체험 및 브랜드 홍보 등 [※ 예외 품목도 협의 가능]",
       "category": "송파구 문정",
-      "deposit": "100,000원 (3일) vat별도",
-      "default_items": ["1500mm 테이블 1개", "파라솔", "스트링 조명", "전기"]
+      "deposit": "100,000원 (3일) vat별도"
     }
   ]
 }
