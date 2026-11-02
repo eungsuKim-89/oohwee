@@ -571,6 +571,8 @@ async function renderEventList() {
       if (success) success.style.display = "none";
       const roundFeeLine = document.getElementById("round-fee-line");
       if (roundFeeLine) roundFeeLine.textContent = "";
+      const consentAll = document.getElementById("consent-all");
+      if (consentAll) consentAll.checked = false;
 
       const applySection = document.getElementById("apply-section");
       applySection.style.display = "block";
@@ -699,6 +701,29 @@ function attachAutoHyphen(inputEl, formatFn) {
   });
 }
 
+/**
+ * "전체 동의하기" 체크박스와 4개 개별 동의 체크박스를 서로 연동한다.
+ * - 전체 동의하기를 누르면 4개가 한꺼번에 체크/해제됨
+ * - 4개를 일일이 체크해서 다 켜지면 전체 동의하기도 자동으로 체크됨
+ */
+function setupConsentAll(form) {
+  const consentAll = document.getElementById("consent-all");
+  const consentChecks = Array.from(form.querySelectorAll(".consent-check input[type='checkbox']"));
+  if (!consentAll || consentChecks.length === 0) return;
+
+  consentAll.addEventListener("change", () => {
+    consentChecks.forEach((cb) => {
+      cb.checked = consentAll.checked;
+    });
+  });
+
+  consentChecks.forEach((cb) => {
+    cb.addEventListener("change", () => {
+      consentAll.checked = consentChecks.every((c) => c.checked);
+    });
+  });
+}
+
 function setupApplyForm() {
   const form = document.getElementById("apply-form");
   const success = document.getElementById("form-success");
@@ -708,6 +733,7 @@ function setupApplyForm() {
 
   attachAutoHyphen(document.getElementById("phone"), formatPhoneNumber);
   attachAutoHyphen(document.getElementById("bizno"), formatBizNo);
+  setupConsentAll(form);
 
   if (select && label) {
     select.addEventListener("change", () => {
