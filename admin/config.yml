@@ -33,7 +33,7 @@ collections:
                 name: "rounds"
                 widget: "list"
                 required: false
-                hint: "회차명을 적고, 마감된 회차는 '마감' 체크박스를 켜주세요. 켜진 회차는 신청 화면에서 줄이 그어지고 선택할 수 없게 됩니다"
+                hint: "회차명을 적고, 마감된 회차는 '마감' 체크박스를 켜주세요. 이 회차만 금액이 다르면 '가격'에 적어주세요 (비워두면 행사의 구좌비안내 금액 사용)"
                 fields:
                   - label: "회차명"
                     name: "round_name"
@@ -43,13 +43,18 @@ collections:
                     widget: "boolean"
                     default: false
                     required: false
+                  - label: "가격 (선택, 예: 150,000원 (3일))"
+                    name: "round_price"
+                    widget: "string"
+                    required: false
+                    hint: "이 회차만 다른 금액을 적용하고 싶을 때 입력하세요 (테이블 1개 기준 금액). 비워두면 행사의 '구좌비안내' 금액을 그대로 씁니다."
               - label: "장소"
                 name: "place"
                 widget: "string"
               - label: "구좌비안내"
                 name: "deposit"
                 widget: "string"
-                hint: "카드에 그대로 보이는 안내 문구예요. 일반 셀러 행사는 여기 적은 첫 금액(예: 150,000원)이 '기본 테이블 1개' 단가로 자동 계산에 쓰입니다"
+                hint: "카드에 그대로 보이는 안내 문구예요. 일반 셀러 행사는 여기 적은 첫 금액(예: 150,000원)이 '기본 테이블 1개' 단가로 자동 계산에 쓰입니다. 회차별로 다른 금액은 '회차 목록'의 '가격'에서 따로 설정할 수 있어요"
               - label: "부스 옵션 (선택)"
                 name: "booth_options"
                 widget: "list"
