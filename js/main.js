@@ -173,12 +173,20 @@ let currentEventPage = 1;
 const RECRUIT_CATEGORIES =
   "핸드메이드 / 패션(잡화) / 의류(홈웨어, 남성복, 스포츠 기능성 의류 등도 가능) / 액세서리 / 팬시 / 리빙 / 친환경물품 / 반려동물 용품 / 먹거리(즉석 제조 제외) / 브랜드홍보 등 [※ 예외 품목도 협의 가능]";
 
-const STATIC_INFO = `
+// 기본제공 항목으로 고를 수 있는 전체 선택지 (행사에 default_items가 없으면 이 4개 전부를 보여줌)
+const ALL_DEFAULT_ITEMS = ["1500mm 테이블 1개", "파라솔", "스트링 조명", "전기"];
+
+function buildDefaultInfo(ev) {
+  const items = Array.isArray(ev && ev.default_items) && ev.default_items.length > 0
+    ? ev.default_items
+    : ALL_DEFAULT_ITEMS;
+  return `
   <ul class="info-list">
-    <li><span class="k">기본제공</span><span>1500mm 테이블 1개, 파라솔, 스트링 조명, 전기 (행거 사용 시 파라솔·조명만 제공)</span></li>
+    <li><span class="k">기본제공</span><span>${items.join(", ")}</span></li>
     <li><span class="k">개별지참</span><span>의자, 멀티탭, 개인 조명, 테이블보, 마감용 방수포 등</span></li>
     <li><span class="k">문의</span><span>theysayoohwee@gmail.com (문의 시 업체명·판매 품목을 함께 적어주세요)</span></li>
   </ul>`;
+}
 
 // 행사에 별도 시트 주소가 없을 때 쓰는 기본(문정) 구글시트 연동 주소
 const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbycGhDaYDVfNB-Dnn9DdVLVf41tJiO2xjIy9b_GhhOpMIOoF-00VxCK2TE6fQtRTgc/exec";
@@ -465,7 +473,7 @@ async function renderEventList() {
         : ev.hide_default_info
           ? ""
           : `<div><span class="k">CATEGORY</span>${RECRUIT_CATEGORIES}</div>`;
-      const infoBlock = ev.hide_default_info ? STATIC_CONTACT_ONLY : STATIC_INFO;
+      const infoBlock = ev.hide_default_info ? STATIC_CONTACT_ONLY : buildDefaultInfo(ev);
       return `
       <div class="event-card">
         <button type="button" class="event-header" data-idx="${i}" aria-expanded="false">
