@@ -223,10 +223,6 @@ function resolveSheetUrl(ev) {
 }
 
 /**
- * 선택한 행사(title)에 등록된 "회차 목록"으로 #round 셀렉트박스를 다시 채운다.
- * 회차가 하나도 등록 안 된 행사면, 회차 선택 없이 바로 진행 가능하게 만든다.
- */
-/**
  * "기본 1500mm 테이블 2개" / "행거 1000mm 3개" 같은 문자열에서
  * 종류(table/hanger)와 개수를 뽑아낸다.
  */
@@ -328,6 +324,10 @@ function recalcFee() {
   feeHidden.value = totalText;
 }
 
+/**
+ * 선택한 행사(title)에 등록된 "회차 목록"으로 #round 체크박스 목록을 다시 채운다.
+ * 마감(closed) 체크된 회차는 줄긋기 + 선택 불가 처리한다.
+ */
 function updateRoundOptions(title) {
   const container = document.getElementById("round-options");
   const hidden = document.getElementById("round-hidden");
@@ -354,10 +354,11 @@ function updateRoundOptions(title) {
   }
 
   rounds.forEach((r, i) => {
-    const name = r.round_name || r;
+    const name = (r && r.round_name) || r;
+    const closed = !!(r && r.closed);
 
     const row = document.createElement("div");
-    row.className = "round-row";
+    row.className = "round-row" + (closed ? " closed" : "");
 
     const label = document.createElement("label");
     const cb = document.createElement("input");
@@ -365,8 +366,20 @@ function updateRoundOptions(title) {
     cb.value = name;
     cb.className = "round-checkbox";
     cb.id = `round-cb-${i}`;
+    if (closed) cb.disabled = true;
     label.appendChild(cb);
-    label.appendChild(document.createTextNode(name));
+
+    const nameSpan = document.createElement("span");
+    nameSpan.className = "round-name";
+    nameSpan.textContent = name;
+    label.appendChild(nameSpan);
+
+    if (closed) {
+      const badge = document.createElement("span");
+      badge.className = "round-closed-badge";
+      badge.textContent = "마감";
+      label.appendChild(badge);
+    }
     row.appendChild(label);
 
     const tableSelect = document.createElement("select");
@@ -389,12 +402,14 @@ function updateRoundOptions(title) {
 
     container.appendChild(row);
 
-    cb.addEventListener("change", () => {
-      tableSelect.style.display = cb.checked ? "block" : "none";
-      if (!cb.checked) tableSelect.value = "";
-      recalcFee();
-    });
-    tableSelect.addEventListener("change", recalcFee);
+    if (!closed) {
+      cb.addEventListener("change", () => {
+        tableSelect.style.display = cb.checked ? "block" : "none";
+        if (!cb.checked) tableSelect.value = "";
+        recalcFee();
+      });
+      tableSelect.addEventListener("change", recalcFee);
+    }
   });
 
   recalcFee();
