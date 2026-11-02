@@ -68,7 +68,7 @@
       "rounds": [
         {
           "round_name": "1차 : 11.03~11.05 (화,수,목)",
-          "closed": true,
+          "closed": false,
           "round_price": "150,000원 (3일)"
         },
         {
