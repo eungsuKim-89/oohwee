@@ -1,402 +1,830 @@
-<!doctype html>
-<html lang="ko">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>셀러 모집 — 우위 OOHWEE</title>
-<link rel="preconnect" href="https://cdn.jsdelivr.net" />
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&display=swap" />
-<link rel="stylesheet" href="css/style.css" />
-<link rel="icon" href="images/favicon.ico" sizes="any" />
-<link rel="icon" type="image/png" sizes="32x32" href="images/favicon-32.png" />
-<link rel="apple-touch-icon" href="images/favicon-180.png" />
-<style>
-  /* 필수 표시(*) 강조 — style.css를 안 건드리고 이 페이지에서 바로 적용 */
-  .required-mark { color: #e2231a; font-weight: 700; }
+// OOHWEE — common site behavior
+// events.json / reference.json 을 fetch로 읽어와 렌더링합니다.
+// (관리자 페이지 /admin 에서 로그인해 수정하면 이 파일들이 자동으로 바뀝니다)
 
-  /* 회차 체크박스 그룹 (드롭다운 대신 전체 펼쳐놓기) */
-  .round-options {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    padding: 14px 16px;
-    border: 1px solid var(--line, #e3e3e3);
-    border-radius: 10px;
-    background: #fafafa;
+document.addEventListener("DOMContentLoaded", () => {
+  const toggle = document.querySelector(".nav-toggle");
+  const links = document.querySelector(".nav-links");
+  if (toggle && links) {
+    toggle.addEventListener("click", () => links.classList.toggle("open"));
   }
-  .round-row {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+});
+
+function ensureLightbox() {
+  let box = document.getElementById("oohwee-lightbox");
+  if (box) return box;
+
+  box = document.createElement("div");
+  box.id = "oohwee-lightbox";
+  box.style.cssText = `
+    position: fixed; inset: 0; z-index: 9999; display: none;
+    background: rgba(0,0,0,0.9); align-items: center; justify-content: center;
+    flex-direction: column; padding: 24px; box-sizing: border-box;
+  `;
+  box.innerHTML = `
+    <button id="oohwee-lightbox-close" aria-label="닫기" style="
+      position: absolute; top: max(16px, env(safe-area-inset-top)); right: max(16px, env(safe-area-inset-right));
+      width: 44px; height: 44px; border-radius: 50%; border: none;
+      background: #ffffff; color: #1a1a1a; font-size: 20px; font-weight: 700;
+      cursor: pointer; line-height: 1; -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation; z-index: 2; box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+    ">✕</button>
+    <img id="oohwee-lightbox-img" src="" alt="" style="
+      max-width: 88vw; max-height: 65vh; object-fit: contain; border-radius: 6px;
+      touch-action: pinch-zoom; cursor: pointer;
+    " />
+    <div id="oohwee-lightbox-caption" style="
+      color: #fff; font-size: 15px; font-weight: 700; margin-top: 14px; text-align: center;
+      padding: 0 16px;
+    "></div>
+    <div style="color: rgba(255,255,255,0.55); font-size: 12.5px; margin-top: 18px;">사진을 누르면 닫혀요</div>
+  `;
+  document.body.appendChild(box);
+
+  // 모바일에서 라이트박스 열려있는 동안 뒷배경이 같이 스크롤되지 않도록 잠금/해제
+  let savedScrollY = 0;
+  const close = () => {
+    box.style.display = "none";
+    document.body.style.position = "";
+    document.body.style.top = "";
+    document.body.style.width = "";
+    document.body.style.overflow = "";
+    window.scrollTo(0, savedScrollY);
+  };
+  box.addEventListener("click", (e) => {
+    // 배경(어두운 영역) 또는 사진 자체를 탭/클릭해도 닫히게 — X버튼을 굳이 못 찾아도 됨
+    if (e.target === box || e.target.id === "oohwee-lightbox-img") close();
+  });
+  box.querySelector("#oohwee-lightbox-close").addEventListener("click", close);
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && box.style.display !== "none") close();
+  });
+
+  box._lock = () => {
+    savedScrollY = window.scrollY;
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${savedScrollY}px`;
+    document.body.style.width = "100%";
+    document.body.style.overflow = "hidden";
+  };
+
+  return box;
+}
+
+function openLightbox(src, caption) {
+  const box = ensureLightbox();
+  box.querySelector("#oohwee-lightbox-img").src = src;
+  box.querySelector("#oohwee-lightbox-caption").textContent = caption || "";
+  box.style.display = "flex";
+  box._lock();
+}
+
+async function loadJSON(path) {
+  try {
+    const res = await fetch(path, { cache: "no-store" });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return Array.isArray(data) ? data : data.items || [];
+  } catch (err) {
+    console.error("failed to load", path, err);
+    return [];
   }
-  .round-row label {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 14.5px;
-    font-weight: 400;
-    cursor: pointer;
-  }
-  .round-options input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
-    accent-color: #e2231a;
-    cursor: pointer;
-    flex-shrink: 0;
-  }
-  .round-table-select {
-    margin-left: 28px;
-    padding: 8px 10px;
-    border: 1px solid var(--line, #ddd);
-    border-radius: 6px;
-    font-size: 13.5px;
-    max-width: 260px;
-  }
-  .round-options .round-empty {
-    color: var(--ink-soft, #888);
-    font-size: 14px;
+}
+
+/**
+ * 갤러리 그리드를 렌더링한다.
+ */
+async function renderGallery(targetId, limit, activeCategory) {
+  const el = document.getElementById(targetId);
+  if (!el) return;
+
+  const all = await loadJSON("data/reference.json");
+  // 관리자 화면(Decap)은 새로 올린 항목을 목록 맨 아래에 추가하므로,
+  // 순서를 뒤집어서 가장 최근에 올린 항목이 맨 위(홈 화면에서는 맨 앞)에 오게 한다
+  const items = all
+    .filter((item) => !activeCategory || activeCategory === "전체" || item.category === activeCategory)
+    .reverse();
+
+  // 한 항목(item)에 사진이 여러 장(images 배열) 들어있을 수 있으므로,
+  // 사진 한 장 = 카드 한 장이 되도록 먼저 펼쳐준다 (기존 단일 image 필드도 함께 지원)
+  const flattened = [];
+  items.forEach((item) => {
+    const photos = Array.isArray(item.images) && item.images.length > 0
+      ? item.images
+      : (item.image ? [item.image] : []);
+    photos.forEach((src) => {
+      flattened.push({ src, caption: item.description || item.caption || "" });
+    });
+  });
+
+  const shown = limit ? flattened.slice(0, limit) : flattened;
+
+  if (shown.length === 0) {
+    el.innerHTML = `<div class="gallery-empty">업로드 대기중입니다.</div>`;
+    return;
   }
 
-  /* 회차별 가격 표기 */
-  .round-price-note {
-    font-size: 12.5px;
-    color: #F2661D;
-    font-weight: 600;
-  }
-
-  /* 마감된 회차 — 줄긋기 + 선택 불가 표시 */
-  .round-row.closed label {
-    color: var(--ink-soft, #999);
-    cursor: not-allowed;
-  }
-  .round-row.closed .round-name {
-    text-decoration: line-through;
-  }
-  .round-row.closed input[type="checkbox"] {
-    cursor: not-allowed;
-    accent-color: #bbb;
-  }
-  .round-closed-badge {
-    font-size: 11.5px;
-    font-weight: 700;
-    color: #fff;
-    background: #999;
-    padding: 2px 7px;
-    border-radius: 10px;
-    margin-left: 4px;
-  }
-
-  /* 참가비 표시줄 */
-  .round-fee-line {
-    margin-top: 10px;
-    font-family: var(--font-mono, monospace);
-    font-size: 13.5px;
-    font-weight: 600;
-    color: #F2661D;
-  }
-
-  /* 세부카테고리 필터 버튼 (신청 페이지 상단, 문정/서울크루즈 등) */
-  .event-category-filters {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 18px;
-  }
-  .category-filter-btn {
-    padding: 7px 14px;
-    border: 1.5px solid #F2661D;
-    border-radius: 8px;
-    background: #fff;
-    color: #F2661D;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background .15s, color .15s;
-  }
-  .category-filter-btn:hover {
-    background: #FFF1E8;
-  }
-  .category-filter-btn.active {
-    background: #F2661D;
-    color: #fff;
-  }
-
-  /* 동의사항 전체 동의하기 */
-  .consent-all {
-    margin: 28px 0 10px;
-    padding: 14px 16px;
-    border: 1.5px solid #F2661D;
-    border-radius: 10px;
-    background: #FFF6F0;
-  }
-  .consent-all-check {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 15.5px;
-    cursor: pointer;
-  }
-  .consent-all-check input[type="checkbox"] {
-    width: 20px;
-    height: 20px;
-    accent-color: #F2661D;
-    cursor: pointer;
-    flex-shrink: 0;
-  }
-  .consent-all-check strong {
-    font-weight: 700;
-    color: #1a1a1a;
-  }
-</style>
-</head>
-<body>
-
-<nav class="nav">
-  <div class="wrap">
-    <a class="nav-logo" href="index.html">
-      <img src="images/logo-black.png" alt="우위 OOHWEE" />
-      <span>OOHWEE</span>
-    </a>
-    <div class="nav-links">
-      <a href="index.html">홈</a>
-      <a href="reference.html">레퍼런스</a>
-      <a href="apply.html" class="active">셀러모집</a>
-      <a href="index.html#contact">문의</a>
-    </div>
-    <button class="nav-toggle" aria-label="메뉴 열기">≡</button>
-  </div>
-</nav>
-
-<header class="page-hero torn-bottom">
-  <div class="wrap">
-    <span class="eyebrow">EVENTS</span>
-    <h1>프리마켓 셀러 모집</h1>
-    <p>지금 열려 있는 행사를 확인하고, 참가하고 싶은 행사에 바로 신청서를 내주세요.</p>
-  </div>
-</header>
-
-<div class="page-body">
-  <div class="wrap">
-
-    <!-- ============ 행사 목록 ============ -->
-    <section id="events-section" style="margin-bottom: 40px;">
-      <div class="pillar" style="margin-bottom:26px;">
-        <span class="tag">OPEN CALL</span>
-        <h2 style="font-size:22px; margin:0;">모집 중인 행사</h2>
-      </div>
-      <p style="font-size:13.5px; color:var(--ink-soft); margin:-10px 0 20px;">행사를 클릭하면 참가 안내와 신청하기 버튼이 나옵니다.</p>
-      <div id="event-list" class="event-list"></div>
-    </section>
-
-    <!-- ============ 신청서 (행사에서 "신청하기"를 눌러야 표시됨) ============ -->
-    <section class="card-panel" id="apply-section" style="margin-bottom:100px; display:none;">
-      <span class="eyebrow">APPLY</span>
-      <h2 style="font-size:22px; margin:10px 0 6px;">셀러 신청서</h2>
-      <p id="selected-event-label" style="font-family:var(--font-mono); font-size:13.5px; color:var(--ink-soft); margin:0 0 24px;"></p>
-
-      <div class="form-success" id="form-success">
-        신청이 접수됐습니다. 담당자가 순차적으로 연락드릴게요.
-      </div>
-
-      <!--
-        action 주소를 Formspree(무료) 엔드포인트로 바꾸면
-        별도 서버 없이 이메일로 신청 내역을 받을 수 있습니다. (README 참고)
-      -->
-      <form class="apply-form" id="apply-form" action="https://formspree.io/f/xoealdkb" method="POST">
-        <div class="form-row">
-          <label for="event">신청할 행사 <span class="required-mark">*</span></label>
-          <select id="event" name="신청행사" required>
-            <option value="">행사를 선택해 주세요</option>
-          </select>
+  el.innerHTML = shown
+    .map(
+      (photo) => `
+      <figure style="position:relative; margin:0; aspect-ratio:1/1; overflow:hidden; border-radius:10px;">
+        <div class="gallery-clickable" data-src="${photo.src}" data-caption="${(photo.caption || "").replace(/"/g, "&quot;")}" style="position:relative; display:block; width:100%; height:100%; cursor:pointer;">
+          <img src="${photo.src}" alt="${photo.caption || ""}" loading="lazy" style="width:100%; height:100%; object-fit:cover; display:block;" />
+          ${photo.caption ? `<span style="position:absolute; top:12px; left:12px; background:#F2661D; color:#fff; font-size:13.5px; font-weight:700; padding:6px 13px; border-radius:20px; box-shadow:0 2px 8px rgba(0,0,0,0.25); line-height:1.3;">${photo.caption}</span>` : ""}
         </div>
+      </figure>`
+    )
+    .join("");
 
-        <div class="form-row">
-          <label>참여 회차 <span class="required-mark">*</span> <span style="font-weight:400; color:var(--ink-soft);">(복수 선택 가능)</span></label>
-          <div id="round-options" class="round-options">
-            <span class="round-empty">먼저 위에서 행사를 선택해 주세요</span>
+  el.querySelectorAll(".gallery-clickable").forEach((elm) => {
+    elm.addEventListener("click", () => {
+      openLightbox(elm.dataset.src, elm.dataset.caption);
+    });
+  });
+}
+
+function setupFilters(buttonSelector, targetId) {
+  const buttons = document.querySelectorAll(buttonSelector);
+  buttons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      buttons.forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      renderGallery(targetId, null, btn.dataset.category);
+    });
+  });
+}
+
+/* ==========================================================
+   셀러 모집 페이지: 행사 목록 + 신청서 연동
+   ========================================================== */
+
+const STATUS_CLASS = { "모집중": "open", "모집예정": "upcoming", "마감": "closed" };
+
+// 모집중/모집예정을 위로, 마감을 아래로 정렬할 때 쓰는 우선순위
+const STATUS_ORDER = { "모집중": 0, "모집예정": 1, "마감": 2 };
+
+// 한 페이지에 보여줄 행사 개수
+const EVENTS_PER_PAGE = 10;
+
+// 현재 선택된 세부카테고리 / 페이지 번호 (전역 상태)
+let currentEventCategory = "전체";
+let currentEventPage = 1;
+
+const RECRUIT_CATEGORIES =
+  "핸드메이드 / 패션(잡화) / 의류(홈웨어, 남성복, 스포츠 기능성 의류 등도 가능) / 액세서리 / 팬시 / 리빙 / 친환경물품 / 반려동물 용품 / 먹거리(즉석 제조 제외) / 브랜드홍보 등 [※ 예외 품목도 협의 가능]";
+
+// 기본제공 항목으로 고를 수 있는 전체 선택지 (행사에 default_items가 없으면 이 4개 전부를 보여줌)
+const ALL_DEFAULT_ITEMS = ["1500mm 테이블 1개", "파라솔", "스트링 조명", "전기"];
+
+function buildDefaultInfo(ev) {
+  const items = Array.isArray(ev && ev.default_items) && ev.default_items.length > 0
+    ? ev.default_items
+    : ALL_DEFAULT_ITEMS;
+  return `
+  <ul class="info-list">
+    <li><span class="k">기본제공</span><span>${items.join(", ")}</span></li>
+    <li><span class="k">개별지참</span><span>의자, 멀티탭, 개인 조명, 테이블보, 마감용 방수포 등</span></li>
+    <li><span class="k">문의</span><span>theysayoohwee@gmail.com (문의 시 업체명·판매 품목을 함께 적어주세요)</span></li>
+  </ul>`;
+}
+
+// 행사에 별도 시트 주소가 없을 때 쓰는 기본(문정) 구글시트 연동 주소
+const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbycGhDaYDVfNB-Dnn9DdVLVf41tJiO2xjIy9b_GhhOpMIOoF-00VxCK2TE6fQtRTgc/exec";
+
+// "기본 안내 숨기기"를 켠 행사(체험부스 등)에 보여줄 문의 안내
+const STATIC_CONTACT_ONLY = `
+  <ul class="info-list">
+    <li><span class="k">문의</span><span>theysayoohwee@gmail.com (문의 시 업체명·신청 내용을 함께 적어주세요)</span></li>
+  </ul>`;
+
+let allEventsCache = [];
+
+function escapeHtml(str) {
+  return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+/**
+ * 행사에 등록된 "부스 옵션 + 금액"을 정리해서 돌려준다. (없으면 빈 배열 = 기존 테이블/행거 방식)
+ */
+function getBoothOptions(ev) {
+  if (!ev || !Array.isArray(ev.booth_options)) return [];
+  const result = [];
+  ev.booth_options.forEach((o) => {
+    const label = String((o && o.label) || "").trim();
+    const digits = String((o && o.price) ?? "").replace(/[^\d]/g, "");
+    if (label && digits) result.push({ label, price: parseInt(digits, 10) });
+  });
+  return result;
+}
+
+/**
+ * 신청 내용을 보낼 구글시트(Apps Script) 주소를 정한다.
+ * - 행사에 주소가 있으면 그 주소, 없으면 기본(문정) 주소
+ * - 주소를 적었는데 형식이 틀리면 잘못된 시트로 가지 않도록 시트 전송을 건너뛴다(null)
+ */
+function resolveSheetUrl(ev) {
+  const custom = ev && typeof ev.sheet_url === "string" ? ev.sheet_url.trim() : "";
+  if (!custom) return DEFAULT_GAS_URL;
+  if (/^https:\/\/script\.google\.com\/macros\/s\/[^\s]+\/exec$/.test(custom)) return custom;
+  console.error("시트 연동 주소 형식이 올바르지 않아 시트 전송을 건너뜁니다:", custom);
+  return null;
+}
+
+/**
+ * "기본 1500mm 테이블 2개" / "행거 1000mm 3개" 같은 문자열에서
+ * 종류(table/hanger)와 개수를 뽑아낸다.
+ */
+function parseTableSelection(value) {
+  if (!value) return null;
+  const hangerMatch = value.match(/행거.*?(\d+)\s*개/);
+  if (hangerMatch) return { type: "hanger", count: parseInt(hangerMatch[1], 10) };
+  const tableMatch = value.match(/테이블.*?(\d+)\s*개/);
+  if (tableMatch) return { type: "table", count: parseInt(tableMatch[1], 10) };
+  return null;
+}
+
+/**
+ * 참가비 안내문(예: "150,000원 (2일)")에서 "테이블 1개 기준 금액"만 뽑아낸다.
+ */
+function parseBaseUnitPrice(depositText) {
+  if (!depositText) return null;
+  const m = depositText.match(/([\d,]+)\s*원/);
+  if (!m) return null;
+  return parseInt(m[1].replace(/,/g, ""), 10);
+}
+
+/**
+ * 체크된 회차마다 각자 고른 테이블/행거 선택을 모아서,
+ * 회차별로 각각 계산한 금액을 합산한다. (회차마다 다른 테이블 신청 가능)
+ * 회차에 개별 단가(round_price)가 설정돼 있으면 그 금액을, 없으면 행사 전체 단가를 쓴다.
+ * 행거는 해당 단가의 절반으로 자동 계산한다 (행거 2개 = 테이블 1개와 같은 자리를 차지하므로).
+ */
+function recalcFee() {
+  const feeLine = document.getElementById("round-fee-line");
+  const feeHidden = document.getElementById("fee-hidden");
+  const detailHidden = document.getElementById("round-detail-hidden");
+  const hidden = document.getElementById("round-hidden");
+  const eventSelect = document.getElementById("event");
+  const container = document.getElementById("round-options");
+  if (!feeLine || !feeHidden || !container) return;
+
+  const title = eventSelect ? eventSelect.value : "";
+  const ev = allEventsCache.find((e) => e.title === title);
+  const boothOptions = getBoothOptions(ev);
+  const useOptions = boothOptions.length > 0;
+  const eventUnitPrice = ev && !useOptions ? parseBaseUnitPrice(ev.deposit) : null;
+
+  const checkedRows = Array.from(container.querySelectorAll(".round-row")).filter(
+    (row) => row.querySelector(".round-checkbox").checked
+  );
+
+  if (!ev || (!useOptions && eventUnitPrice === null) || checkedRows.length === 0) {
+    feeLine.textContent = "";
+    feeHidden.value = "";
+    if (detailHidden) detailHidden.value = "";
+    if (hidden) hidden.value = "";
+    return;
+  }
+
+  let total = 0;
+  let allChosen = true;
+  const roundNames = [];
+  const detailLines = [];
+
+  checkedRows.forEach((row) => {
+    const roundName = row.querySelector(".round-checkbox").value;
+    roundNames.push(roundName);
+    const tableSelect = row.querySelector(".round-table-select");
+    const tableValue = tableSelect ? tableSelect.value : "";
+    if (useOptions) {
+      const opt = boothOptions.find((o) => o.label === tableValue);
+      if (!opt) {
+        allChosen = false;
+        detailLines.push(`${roundName}: (부스 미선택)`);
+        return;
+      }
+      total += opt.price;
+      detailLines.push(`${roundName}: ${opt.label} (${opt.price.toLocaleString()}원)`);
+      return;
+    }
+    const sel = parseTableSelection(tableValue);
+    if (!sel) {
+      allChosen = false;
+      detailLines.push(`${roundName}: (테이블 미선택)`);
+      return;
+    }
+    // 이 회차에 설정된 개별 단가(round_price)가 있으면 그걸 쓰고, 없으면 행사 전체 단가를 쓴다
+    const roundUnitPrice = row.dataset.unitPrice ? parseInt(row.dataset.unitPrice, 10) : eventUnitPrice;
+    const roundHangerPrice = roundUnitPrice !== null ? roundUnitPrice / 2 : 0;
+    const perRound = sel.type === "table" ? sel.count * roundUnitPrice : sel.count * roundHangerPrice;
+    total += perRound;
+    detailLines.push(`${roundName}: ${tableValue}`);
+  });
+
+  if (hidden) hidden.value = roundNames.join(" | ");
+  if (detailHidden) detailHidden.value = detailLines.join(" / ");
+
+  if (!allChosen) {
+    feeLine.textContent = useOptions ? "체크한 회차마다 부스를 모두 선택해 주세요" : "체크한 회차마다 신청 테이블을 모두 선택해 주세요";
+    feeHidden.value = "";
+    return;
+  }
+
+  const totalText = `${total.toLocaleString()}원 (VAT별도)`;
+  feeLine.textContent = `참가비: ${totalText} — ${detailLines.join(" / ")}`;
+  feeHidden.value = totalText;
+}
+
+/**
+ * 선택한 행사(title)에 등록된 "회차 목록"으로 #round 체크박스 목록을 다시 채운다.
+ * 마감(closed) 체크된 회차는 줄긋기 + 선택 불가 처리하고,
+ * 회차별 가격(round_price)이 있으면 회차명 옆에 금액을 표시하고 계산에도 반영한다.
+ */
+function updateRoundOptions(title) {
+  const container = document.getElementById("round-options");
+  const hidden = document.getElementById("round-hidden");
+  if (!container) return;
+
+  container.innerHTML = "";
+  if (hidden) hidden.value = "";
+
+  const ev = allEventsCache.find((e) => e.title === title);
+  const rounds = (ev && ev.rounds) || [];
+  const boothOptions = getBoothOptions(ev);
+  const useOptions = boothOptions.length > 0;
+
+  if (!title) {
+    container.innerHTML = `<span class="round-empty">먼저 위에서 행사를 선택해 주세요</span>`;
+    recalcFee();
+    return;
+  }
+
+  if (rounds.length === 0) {
+    container.innerHTML = `<span class="round-empty">이 행사는 회차 구분이 없습니다</span>`;
+    if (hidden) hidden.value = "회차 구분 없음";
+    recalcFee();
+    return;
+  }
+
+  rounds.forEach((r, i) => {
+    const name = (r && r.round_name) || r;
+    const closed = !!(r && r.closed);
+    const roundPriceText = (r && r.round_price) ? String(r.round_price).trim() : "";
+    const roundUnitPrice = !useOptions && roundPriceText ? parseBaseUnitPrice(roundPriceText) : null;
+
+    const row = document.createElement("div");
+    row.className = "round-row" + (closed ? " closed" : "");
+    if (roundUnitPrice !== null) row.dataset.unitPrice = String(roundUnitPrice);
+
+    const label = document.createElement("label");
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.value = name;
+    cb.className = "round-checkbox";
+    cb.id = `round-cb-${i}`;
+    if (closed) cb.disabled = true;
+    label.appendChild(cb);
+
+    const nameSpan = document.createElement("span");
+    nameSpan.className = "round-name";
+    nameSpan.textContent = name;
+    label.appendChild(nameSpan);
+
+    if (!closed && !useOptions && roundPriceText) {
+      const priceNote = document.createElement("span");
+      priceNote.className = "round-price-note";
+      priceNote.textContent = `(${roundPriceText})`;
+      label.appendChild(priceNote);
+    }
+
+    if (closed) {
+      const badge = document.createElement("span");
+      badge.className = "round-closed-badge";
+      badge.textContent = "마감";
+      label.appendChild(badge);
+    }
+    row.appendChild(label);
+
+    const tableSelect = document.createElement("select");
+    tableSelect.className = "round-table-select";
+    tableSelect.style.display = "none";
+    if (useOptions) {
+      tableSelect.appendChild(new Option("부스 선택", ""));
+      boothOptions.forEach((o) => {
+        tableSelect.appendChild(new Option(`${o.label} — ${o.price.toLocaleString()}원`, o.label));
+      });
+    } else {
+      tableSelect.innerHTML = `<option value="">테이블 선택</option>
+        <option value="기본 1500mm 테이블 1개">기본 1500mm 테이블 1개</option>
+        <option value="기본 1500mm 테이블 2개">기본 1500mm 테이블 2개</option>
+        <option value="행거 1000mm 2개">행거 1000mm 2개</option>
+        <option value="행거 1000mm 3개">행거 1000mm 3개</option>
+        <option value="행거 1000mm 4개">행거 1000mm 4개</option>`;
+    }
+    row.appendChild(tableSelect);
+
+    container.appendChild(row);
+
+    if (!closed) {
+      cb.addEventListener("change", () => {
+        tableSelect.style.display = cb.checked ? "block" : "none";
+        if (!cb.checked) tableSelect.value = "";
+        recalcFee();
+      });
+      tableSelect.addEventListener("change", recalcFee);
+    }
+  });
+
+  recalcFee();
+}
+
+async function renderEventList() {
+  const el = document.getElementById("event-list");
+  if (!el) return;
+
+  // 최초 1회만 데이터를 불러오고, 이후 필터/페이지 전환 시엔 캐시를 재사용
+  if (allEventsCache.length === 0) {
+    allEventsCache = await loadJSON("data/events.json");
+  }
+  const events = allEventsCache;
+
+  // 모집중/모집예정 먼저, 마감은 맨 아래로 정렬
+  events.sort((a, b) => {
+    const orderA = STATUS_ORDER[a.status] ?? 99;
+    const orderB = STATUS_ORDER[b.status] ?? 99;
+    return orderA - orderB;
+  });
+
+  renderCategoryFilters(el, events);
+
+  if (events.length === 0) {
+    el.innerHTML = `<div class="events-empty">현재 등록된 행사가 없습니다. 다음 모집 소식을 기다려 주세요.</div>`;
+    return;
+  }
+
+  // 세부카테고리 필터 적용
+  const filtered = events.filter(
+    (ev) => currentEventCategory === "전체" || (ev.category || "기타") === currentEventCategory
+  );
+
+  // 10개 단위 페이지네이션
+  const totalPages = Math.max(1, Math.ceil(filtered.length / EVENTS_PER_PAGE));
+  if (currentEventPage > totalPages) currentEventPage = totalPages;
+  const startIdx = (currentEventPage - 1) * EVENTS_PER_PAGE;
+  const pageItems = filtered.slice(startIdx, startIdx + EVENTS_PER_PAGE);
+
+  const listHtml = pageItems
+    .map((ev) => {
+      const i = events.indexOf(ev);
+      const statusClass = STATUS_CLASS[ev.status] || "upcoming";
+      const closed = ev.status === "마감";
+      const boothOpts = getBoothOptions(ev);
+      const boothRow = boothOpts.length > 0
+        ? `<div><span class="k">BOOTH</span>${boothOpts.map((o) => `${o.label} ${o.price.toLocaleString()}원`).join(" / ")}</div>`
+        : "";
+      const customCategories = String(ev.recruit_categories ?? "").trim();
+      const categoryRow = customCategories
+        ? `<div><span class="k">CATEGORY</span>${escapeHtml(customCategories).replace(/\n/g, "<br>")}</div>`
+        : ev.hide_default_info
+          ? ""
+          : `<div><span class="k">CATEGORY</span>${RECRUIT_CATEGORIES}</div>`;
+      const infoBlock = ev.hide_default_info ? STATIC_CONTACT_ONLY : buildDefaultInfo(ev);
+      return `
+      <div class="event-card">
+        <button type="button" class="event-header" data-idx="${i}" aria-expanded="false">
+          <div class="event-main">
+            <span class="event-status ${statusClass}">${ev.status}</span>
+            <h3>${ev.title}</h3>
+            <div class="event-meta-inline">${ev.place}</div>
           </div>
-          <div id="round-fee-line" class="round-fee-line"></div>
-          <input type="hidden" id="round-hidden" name="참여회차" value="" />
-          <input type="hidden" id="fee-hidden" name="참가비" value="" />
-          <input type="hidden" id="round-detail-hidden" name="회차별신청내역" value="" />
-        </div>
-
-        <div class="form-row">
-          <label for="referral">알게된 경로 <span class="required-mark">*</span></label>
-          <input id="referral" name="알게된경로" type="text" placeholder="예: 인스타그램, 지인 소개, 이전 참가 등" required />
-        </div>
-
-        <div class="form-row-2">
-          <div class="form-row">
-            <label for="brand">업체명 (사업자등록증과 동일) <span class="required-mark">*</span></label>
-            <input id="brand" name="업체명" type="text" placeholder="사업자 없으면 브랜드명" required />
+          <span class="event-chevron">＋</span>
+        </button>
+        <div class="event-detail" id="event-detail-${i}">
+          <div class="event-meta">
+            <div><span class="k">PLACE</span>${ev.place}</div>
+            <div><span class="k">FEE</span>${ev.deposit || "추후 안내"}</div>
+            ${boothRow}
+            ${categoryRow}
+            ${ev.deadline ? `<div><span class="k">DEADLINE</span>${ev.deadline}까지</div>` : ""}
           </div>
-          <div class="form-row">
-            <label for="sns">업체 SNS <span class="required-mark">*</span></label>
-            <input id="sns" name="업체SNS" type="text" placeholder="인스타그램/홈페이지 (없으면 0)" required />
-          </div>
+          ${ev.note ? `<div class="event-note">${String(ev.note).replace(/\n/g, "<br>")}</div>` : ""}
+          ${infoBlock}
+          <button class="btn" type="button" data-event-title="${ev.title}" ${closed ? "disabled" : ""}>
+            ${closed ? "모집 마감" : "신청하기"}
+          </button>
         </div>
+      </div>`;
+    })
+    .join("");
 
-        <div class="form-row-2">
-          <div class="form-row">
-            <label for="name">대표자 성명 <span class="required-mark">*</span></label>
-            <input id="name" name="대표자성명" type="text" required />
-          </div>
-          <div class="form-row">
-            <label for="phone">담당자 연락처 <span class="required-mark">*</span></label>
-            <input id="phone" name="연락처" type="tel" placeholder="010-0000-0000" maxlength="13" required />
-          </div>
-        </div>
+  // 기존 목록 영역과 별도로, 필터 아래쪽에 실제 카드 목록을 넣을 컨테이너 확보
+  let listContainer = document.getElementById("event-list-cards");
+  if (!listContainer) {
+    listContainer = document.createElement("div");
+    listContainer.id = "event-list-cards";
+    el.appendChild(listContainer);
+  }
+  listContainer.innerHTML = listHtml || `<div class="events-empty">이 카테고리에는 등록된 행사가 없습니다.</div>`;
 
-        <div class="form-row">
-          <label for="items">입점 품목 <span class="required-mark">*</span></label>
-          <input id="items" name="판매품목" type="text" placeholder="판매하실 상품 품목을 정확히 기재" required />
-        </div>
+  renderPagination(el, totalPages);
 
-        <div class="form-row">
-          <label for="carnum">차량번호 <span class="required-mark">*</span></label>
-          <input id="carnum" name="차량번호" type="text" placeholder="예: 123가4567 (차량 없으면 0 입력)" required />
-        </div>
+  // 행사 선택 셀렉트박스 채우기 (전체 행사 기준, 필터와 무관하게 항상 전체 옵션 제공)
+  const select = document.getElementById("event");
+  if (select) {
+    select.querySelectorAll("option:not(:first-child)").forEach((o) => o.remove());
+    events.forEach((ev) => {
+      const opt = document.createElement("option");
+      opt.value = ev.title;
+      opt.textContent = `${ev.title}${ev.status === "마감" ? " (마감)" : ""}`;
+      if (ev.status === "마감") opt.disabled = true;
+      select.appendChild(opt);
+    });
 
-        <div class="form-row-2">
-          <div class="form-row">
-            <label for="biztype">사업자 형태 <span class="required-mark">*</span></label>
-            <select id="biztype" name="사업자형태" required>
-              <option value="">선택해 주세요</option>
-              <option value="비사업자">비사업자</option>
-              <option value="간이사업자">간이사업자</option>
-              <option value="일반사업자">일반사업자</option>
-            </select>
-          </div>
-          <div class="form-row">
-            <label for="bizno">사업자 번호 <span class="required-mark">*</span></label>
-            <input id="bizno" name="사업자번호" type="text" placeholder="000-00-00000 (없으면 0)" maxlength="12" required />
-          </div>
-        </div>
+    // 행사를 선택하면, 그 행사에 등록된 회차 목록으로 "참여 회차"를 자동 갱신
+    select.addEventListener("change", () => {
+      updateRoundOptions(select.value);
+    });
+  }
 
-        <div class="form-row">
-          <label for="email">담당자 이메일 <span class="required-mark">*</span></label>
-          <input id="email" name="이메일" type="email" required />
-        </div>
+  // 카드 헤더 클릭 → 아코디언 토글
+  listContainer.querySelectorAll(".event-header").forEach((header) => {
+    header.addEventListener("click", () => {
+      const idx = header.dataset.idx;
+      const detail = document.getElementById(`event-detail-${idx}`);
+      const isOpen = detail.classList.contains("open");
+      listContainer.querySelectorAll(".event-detail.open").forEach((d) => d.classList.remove("open"));
+      listContainer.querySelectorAll(".event-header").forEach((h) => h.setAttribute("aria-expanded", "false"));
 
-        <div class="form-row">
-          <label for="refund">환불 계좌 (은행 / 입금자명 / 계좌번호) <span class="required-mark">*</span></label>
-          <input id="refund" name="환불계좌" type="text" placeholder="예: 카카오뱅크 홍길동 0123456789" required />
-        </div>
+      // 다른(또는 같은) 행사 카드를 열고닫을 때마다, 이전에 열려있던 신청서는 일단 닫아둔다
+      // (신청서는 오직 "신청하기" 버튼을 눌러야만 다시 뜬다)
+      const applySection = document.getElementById("apply-section");
+      if (applySection) applySection.style.display = "none";
 
-        <div class="form-row">
-          <label for="message">문의사항 (선택)</label>
-          <textarea id="message" name="문의내용" placeholder="궁금한 점을 자유롭게 적어주세요"></textarea>
-        </div>
+      if (!isOpen) {
+        detail.classList.add("open");
+        header.setAttribute("aria-expanded", "true");
+      }
+    });
+  });
 
-        <!-- ===== 전체 동의하기 ===== -->
-        <div class="consent-all">
-          <label class="consent-all-check">
-            <input type="checkbox" id="consent-all" />
-            <strong>아래 4가지 항목 전체 동의하기</strong>
-          </label>
-        </div>
+  // "신청하기" 버튼 → 신청서 섹션 노출 + 행사 자동 선택 + 스크롤
+  listContainer.querySelectorAll("button[data-event-title]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const title = btn.dataset.eventTitle;
+      if (select) select.value = title;
+      updateRoundOptions(title);
+      const label = document.getElementById("selected-event-label");
+      if (label) label.textContent = `선택한 행사: ${title}`;
 
-        <!-- ===== 동의 항목 4종 ===== -->
-        <div class="consent-block">
-          <p class="consent-title">1. 개인정보 수집 및 이용 동의 <span class="required-mark">*</span></p>
-          <div class="consent-text">
-            [우위 마켓] 개인정보 수집 및 이용 동의<br /><br />
-            우위 마켓은 「개인정보 보호법」에 의거하여 셀러님의 소중한 개인정보와 권익을 안전하게 보호하고 있습니다. 수집된 정보는 명시된 목적 외의 용도로는 사용되지 않으며, 이용 목적이 변경될 경우 사전 동의를 구합니다.<br /><br />
-            1) 수집·이용 목적: 마켓 행사의 원활한 진행 및 운영 관리, 행사 관련 공지 및 안내 통지<br />
-            2) 수집 항목: 성함, 연락처, 이메일 주소<br />
-            3) 신청인(업체)은 위 내용에 동의하는 경우에만 신청이 접수됩니다.
-          </div>
-          <label class="consent-check"><input type="checkbox" name="개인정보동의" value="동의함" required /> 내용을 숙지하였으며, 동의합니다 <span class="required-mark">*</span></label>
-        </div>
+      // 이전에 한 번 제출했었더라도, 새로 "신청하기"를 누르면 항상 깨끗한 새 폼이 보이게 함
+      const form = document.getElementById("apply-form");
+      const success = document.getElementById("form-success");
+      if (form) {
+        form.reset();
+        form.style.display = "";
+      }
+      if (success) success.style.display = "none";
+      const roundFeeLine = document.getElementById("round-fee-line");
+      if (roundFeeLine) roundFeeLine.textContent = "";
+      const consentAll = document.getElementById("consent-all");
+      if (consentAll) consentAll.checked = false;
 
-        <div class="consent-block">
-          <p class="consent-title">2. 마켓 입점 전 필수 숙지사항 <span class="required-mark">*</span></p>
-          <div class="consent-text">
-            [우위 마켓] 셀러 참여 필수 확인 안내 (미동의 시 신청이 취소될 수 있습니다)<br /><br />
-            • 매출 실적 제출: 매일 영업 종료 후 당일 매출 실적을 주최 측에 공유해야 합니다.<br />
-            • 홍보용 촬영: 행사 기간 중 현장 사진/영상 촬영이 있을 수 있으며, 마켓 홍보 및 결과 보고에 사용됩니다.<br />
-            • 입점비 및 영수증: VAT 별도이며, 요청 시 해당 월 마지막 주에 세금계산서(사업자) 또는 현금영수증(개인)을 발급합니다.
-          </div>
-          <label class="consent-check"><input type="checkbox" name="필수숙지동의" value="동의함" required /> 내용을 숙지하였으며, 동의합니다 <span class="required-mark">*</span></label>
-        </div>
+      const applySection = document.getElementById("apply-section");
+      applySection.style.display = "block";
+      applySection.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  });
+}
 
-        <div class="consent-block">
-          <p class="consent-title">3. 광고성 정보 수신 동의 <span class="required-mark">*</span></p>
-          <div class="consent-text">
-            [우위 마켓] 광고성 정보 수신 동의<br /><br />
-            「정보통신망법」에 따라 신규 셀러 모집, 주요 행사 일정 및 혜택 안내 등 광고성 정보를 이메일·SNS·문자 등으로 발송하기 위해 사전 동의를 받고 있습니다.
-          </div>
-          <label class="consent-check"><input type="checkbox" name="광고수신동의" value="동의함" required /> 내용을 숙지하였으며, 동의합니다 <span class="required-mark">*</span></label>
-        </div>
+/**
+ * 세부카테고리 필터 버튼들을 자동 생성한다.
+ * (행사 데이터에 있는 category 값들을 모아서 중복 없이 버튼으로 만듦)
+ */
+function renderCategoryFilters(el, events) {
+  let filterBar = document.getElementById("event-category-filters");
+  if (!filterBar) {
+    filterBar = document.createElement("div");
+    filterBar.id = "event-category-filters";
+    filterBar.className = "event-category-filters";
+    el.parentNode.insertBefore(filterBar, el);
+  }
 
-        <div class="consent-block">
-          <p class="consent-title">4. 입점 및 현장 운영 약관 동의 <span class="required-mark">*</span></p>
-          <div class="consent-text">
-            [우위 마켓] 입점 및 현장 운영 약관 동의<br /><br />
-            본 약관은 주관사(이하 '주최 측')와 본 행사에 참가 승인된 셀러(이하 '파트너') 간의 원활한 상업 행위(판매, 홍보 등 일체)를 위한 필수 규정입니다. 입점 신청 시 아래 모든 규정에 전적으로 동의한 것으로 간주합니다.<br /><br />
+  const categories = Array.from(
+    new Set(events.map((ev) => ev.category || "기타"))
+  );
+  const allCats = ["전체", ...categories];
 
-            <strong>제1장. 참가 계약 및 공간 배정</strong><br />
-            • 계약 성립: 웹페이지 신청 폼 제출 후 주최 측의 승인을 받아야 하며, 안내된 납기일 내에 참가비를 입금해야 최종 계약이 성립됩니다.<br />
-            • 승인 취소 및 미입금: 파트너의 신청 품목이 마켓 성격에 부합하지 않을 경우 주최 측은 승인을 취소할 수 있으며, 사전 통보 없는 납기일 내 미입금 시 입점은 자동 취소됩니다.<br />
-            • 공간 배정: 부스 배정에 대한 일체의 권한은 주최 측에 있습니다. 행사 진행에 필요할 경우 배정된 공간의 위치 변경을 요구할 수 있으며, 파트너는 이에 따라야 합니다.<br /><br />
+  filterBar.innerHTML = allCats
+    .map(
+      (cat) =>
+        `<button type="button" class="category-filter-btn${cat === currentEventCategory ? " active" : ""}" data-category="${cat}">${cat}</button>`
+    )
+    .join("");
 
-            <strong>제2장. 마켓 현장 운영 및 위반 시 조치</strong><br />
-            • 운영 규칙: 파트너는 신청 폼에 명시한 품목만을 전시·판매해야 하며, 영업시간 동안 반드시 판매 직원이 현장에 상주해야 합니다.<br />
-            • 금지 행위 및 즉각 퇴점: 승인되지 않은 품목 판매, 허가받지 않은 결제 방식 사용 시 즉시 판매 중지 및 퇴점을 요구할 수 있습니다. 이 경우 입점비는 절대 반환되지 않으며, 파트너는 주최 측에 환불이나 배상을 청구할 수 없습니다.<br />
-            • 공간 및 시설물 임의 사용 금지: 주최 측의 사전 승인 없이 계약된 면적 외의 공간이나 개인 추가 집기를 사용할 수 없습니다.<br />
-            • 시설물 원상복구: 현장에 설치된 부대시설 및 설비를 임의로 변경할 수 없으며, 파트너가 설비를 손상시킬 경우 자비로 즉시 원상복구 또는 변상 조치해야 합니다.<br /><br />
+  filterBar.querySelectorAll(".category-filter-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      currentEventCategory = btn.dataset.category;
+      currentEventPage = 1; // 카테고리 바꾸면 1페이지로 초기화
+      const applySection = document.getElementById("apply-section");
+      if (applySection) applySection.style.display = "none"; // 다른 카테고리로 넘어가면 이전 신청서는 닫아둔다
+      renderEventList();
+    });
+  });
+}
 
-            <strong>제3장. 상품 책임 및 지적재산권</strong><br />
-            • 상품 책임 의무: 행사 중 판매된 제품 및 서비스에 대한 모든 책임은 파트너에게 있습니다. 상품 문제로 구매자가 주최 측에 보상을 요구할 경우, 파트너는 주최 측의 모든 손해를 배상해야 합니다. (관련 증빙자료 요구 시 즉시 제출)<br />
-            • 지적재산권 보호: 타인의 지적재산권 및 저작권을 침해하는 상품은 원천 입점 불가하며, 사후 발견 시 즉시 퇴거 조치됩니다.<br />
-            • 현장 시정 요구: 상품 전시가 안전, 청결, 질서 등에 위배될 경우 주최 측은 시정을 요구할 수 있으며, 불응 시 즉시 퇴거 조치됩니다.<br /><br />
+/**
+ * 페이지 번호 버튼들을 렌더링한다. (10개 초과 시에만 자동으로 나타남)
+ */
+function renderPagination(el, totalPages) {
+  let pager = document.getElementById("event-pagination");
+  if (!pager) {
+    pager = document.createElement("div");
+    pager.id = "event-pagination";
+    pager.className = "event-pagination";
+    el.appendChild(pager);
+  }
 
-            <strong>제4장. 행사 취소 및 환불 규정</strong><br />
-            • 주최 측 취소: 주최 측의 일방적 사정으로 행사 취소 시 납입된 입점비 전액을 즉시 반환합니다.<br />
-            • 개인 사유 (환불/이월 불가): 입금 후 개인 사유로 인한 불참, 취소 시 입점비는 반환되지 않으며 타 회차로의 이월은 불가합니다.<br />
-            • 천재지변 및 불가항력: 천재지변, 지자체/정부 명령 등으로 행사가 축소·취소될 경우 반환 의무가 없으나, 참가하지 못한 기간에 한해 부분 환불을 진행합니다.<br />
-            • 환불 예외 (목적 달성 간주): 위 상황이 발생하더라도, 하루 운영 시간의 50% 이상(오피스 상권은 점심시간 범위인 통상 오후 2시까지) 행사가 진행되었다면 참가 목적 달성으로 간주하여 환불 대상에서 제외합니다.<br />
-            • 행사 변경 통지: 부득이한 사정으로 행사가 불가할 경우 주최 측은 일정을 변경/취소할 수 있으며 이를 즉시 공지합니다.<br /><br />
+  if (totalPages <= 1) {
+    pager.innerHTML = "";
+    return;
+  }
 
-            <strong>제5장. 우천 시 세부 운영 및 환불 기준</strong><br />
-            • 우천 취소 기준: 행사 시작 시간 기준, 시간당 5mm 이상의 비가 2시간 이상 연속으로 내릴 경우 우천 취소됩니다.<br />
-            • 정상 진행: 행사 시작 후 2시간이 지난 시점부터 비가 내릴 경우 행사는 정상 진행됩니다.<br />
-            • 중도 취소 (환불 불가): 전체 행사 시간의 누적 50% 이상(오피스 상권 기준 통상 오후 2시까지) 진행된 이후 비 등의 기상 사유로 중단될 경우, 행사 목적 달성으로 간주하여 환불되지 않습니다.<br />
-            • 중도 취소 (부분 환불): 행사 시작 후 4시간 이내(1일 8시간 미만 행사는 50% 진행률 기준, 오피스 상권은 오후 2시 이내) 취소될 경우, 행사 진행 1시간당 1만 원을 차감한 나머지 금액에 대해 환불합니다.<br /><br />
+  let buttons = "";
+  for (let p = 1; p <= totalPages; p++) {
+    buttons += `<button type="button" class="page-btn${p === currentEventPage ? " active" : ""}" data-page="${p}">${p}</button>`;
+  }
+  pager.innerHTML = buttons;
 
-            <strong>제6장. 현장 안전 및 사고 배상 책임</strong><br />
-            • 안전 관리 및 도난 면책: 주최 측은 행사장의 전체 청결과 안전에 만전을 기합니다. 단, 파트너는 본인 입점 공간의 상품 및 설비에 대해 스스로 안전 관리를 해야 하며, 훼손 및 도난 발생 시 주최 측에 책임을 물을 수 없습니다.<br />
-            • 손해 배상 청구: 파트너의 고의 또는 과실로 화재, 도난, 파손 등의 사고가 발생하여 주최 측, 빌딩, 혹은 타인에게 손해를 입힌 경우 파트너가 전적으로 배상 책임을 부담합니다.
-          </div>
-          <label class="consent-check"><input type="checkbox" name="약관동의" value="동의함" required /> 내용을 숙지하였으며, 동의합니다 <span class="required-mark">*</span></label>
-        </div>
+  pager.querySelectorAll(".page-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      currentEventPage = parseInt(btn.dataset.page, 10);
+      const applySection = document.getElementById("apply-section");
+      if (applySection) applySection.style.display = "none"; // 페이지 넘기면 이전 신청서는 닫아둔다
+      renderEventList();
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  });
+}
 
-                <button class="form-submit" type="submit">신청서 제출</button>
-      </form>
-    </section>
+/**
+ * 연락처(휴대폰) 자동 하이픈: 010-0000-0000 (10자리면 010-000-0000)
+ */
+function formatPhoneNumber(digits) {
+  digits = digits.slice(0, 11);
+  if (digits.length < 4) return digits;
+  if (digits.length <= 10) {
+    return digits.slice(0, 3) + "-" + digits.slice(3, 6) + "-" + digits.slice(6);
+  }
+  return digits.slice(0, 3) + "-" + digits.slice(3, 7) + "-" + digits.slice(7, 11);
+}
 
-  </div>
-</div>
+/**
+ * 사업자번호 자동 하이픈: 000-00-00000
+ */
+function formatBizNo(digits) {
+  digits = digits.slice(0, 10);
+  if (digits.length < 4) return digits;
+  if (digits.length < 6) return digits.slice(0, 3) + "-" + digits.slice(3);
+  return digits.slice(0, 3) + "-" + digits.slice(3, 5) + "-" + digits.slice(5);
+}
 
-<footer id="contact">
-  <div class="wrap foot-grid">
-    <div>
-      <img class="foot-logo" src="images/logo-orange.png" alt="우위 OOHWEE" />
-      <p class="foot-tagline">우위는 프리마켓, 공연, 기획을 직접 운영하는 팀입니다.</p>
-    </div>
-    <div>
-      <div class="foot-row"><span class="label">E</span><span>theysayoohwee@gmail.com</span></div>
-    </div>
-  </div>
-  <div class="wrap foot-bottom">© OOHWEE. RUN BY 우위.</div>
-</footer>
+/**
+ * 입력창에 숫자를 치면 실시간으로 하이픈을 자동으로 끼워주는 공통 함수
+ */
+function attachAutoHyphen(inputEl, formatFn) {
+  if (!inputEl) return;
+  inputEl.setAttribute("inputmode", "numeric");
+  inputEl.addEventListener("input", () => {
+    const cursorPos = inputEl.selectionStart ?? inputEl.value.length;
+    const oldValue = inputEl.value;
 
-<script src="js/main.js"></script>
-<script>
-  renderEventList();
-  setupApplyForm();
-</script>
-</body>
-</html>
+    // 커서 바로 앞까지 숫자가 몇 개였는지 세어둔다 (하이픈 재배치 후에도 같은 위치를 유지하기 위함)
+    const digitsBeforeCursor = oldValue.slice(0, cursorPos).replace(/\D/g, "").length;
+
+    const digitsOnly = oldValue.replace(/\D/g, "");
+    const newValue = formatFn(digitsOnly);
+    inputEl.value = newValue;
+
+    // 새로 포맷된 값에서, 숫자 개수 기준으로 커서가 있어야 할 위치를 다시 찾아 이동
+    let newPos = 0;
+    let digitCount = 0;
+    while (newPos < newValue.length && digitCount < digitsBeforeCursor) {
+      if (/\d/.test(newValue[newPos])) digitCount++;
+      newPos++;
+    }
+    inputEl.setSelectionRange(newPos, newPos);
+  });
+}
+
+/**
+ * "전체 동의하기" 체크박스와 4개 개별 동의 체크박스를 서로 연동한다.
+ * - 전체 동의하기를 누르면 4개가 한꺼번에 체크/해제됨
+ * - 4개를 일일이 체크해서 다 켜지면 전체 동의하기도 자동으로 체크됨
+ */
+function setupConsentAll(form) {
+  const consentAll = document.getElementById("consent-all");
+  const consentChecks = Array.from(form.querySelectorAll(".consent-check input[type='checkbox']"));
+  if (!consentAll || consentChecks.length === 0) return;
+
+  consentAll.addEventListener("change", () => {
+    consentChecks.forEach((cb) => {
+      cb.checked = consentAll.checked;
+    });
+  });
+
+  consentChecks.forEach((cb) => {
+    cb.addEventListener("change", () => {
+      consentAll.checked = consentChecks.every((c) => c.checked);
+    });
+  });
+}
+
+function setupApplyForm() {
+  const form = document.getElementById("apply-form");
+  const success = document.getElementById("form-success");
+  const select = document.getElementById("event");
+  const label = document.getElementById("selected-event-label");
+  if (!form) return;
+
+  attachAutoHyphen(document.getElementById("phone"), formatPhoneNumber);
+  attachAutoHyphen(document.getElementById("bizno"), formatBizNo);
+  setupConsentAll(form);
+
+  if (select && label) {
+    select.addEventListener("change", () => {
+      label.textContent = select.value ? `선택한 행사: ${select.value}` : "";
+    });
+  }
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    // 필수 입력칸 검증 — 빠진 곳이 있으면 그 칸으로 바로 스크롤 + 포커스 이동
+    if (!form.checkValidity()) {
+      const invalid = form.querySelector(":invalid");
+      if (invalid) {
+        invalid.scrollIntoView({ behavior: "smooth", block: "center" });
+        invalid.focus({ preventScroll: true });
+      }
+      form.reportValidity();
+      return;
+    }
+
+    const roundHidden = document.getElementById("round-hidden");
+    const roundBox = document.getElementById("round-options");
+    if (roundHidden && !roundHidden.value) {
+      alert("참여 회차를 1개 이상 선택해 주세요.");
+      if (roundBox) roundBox.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+    const uncheckedTable = roundBox
+      ? Array.from(roundBox.querySelectorAll(".round-row")).find(
+          (row) => row.querySelector(".round-checkbox").checked && !row.querySelector(".round-table-select").value
+        )
+      : null;
+    if (uncheckedTable) {
+      const chosenEv = allEventsCache.find((ev) => ev.title === (select ? select.value : ""));
+      const kind = getBoothOptions(chosenEv).length > 0 ? "부스" : "테이블/행거";
+      alert(`체크한 회차마다 신청 ${kind}를 선택해 주세요.`);
+      uncheckedTable.querySelector(".round-table-select").focus();
+      uncheckedTable.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+
+    if (form.action.includes("YOUR_FORM_ID")) {
+      alert("아직 신청서 수신 이메일이 연결되지 않았어요. README의 Formspree 연결 안내를 먼저 진행해 주세요.");
+      return;
+    }
+    const data = new FormData(form);
+    try {
+      const res = await fetch(form.action, {
+        method: "POST",
+        body: data,
+        headers: { Accept: "application/json" },
+      });
+      if (res.ok) {
+        // 구글 스프레드시트로도 같은 내용을 함께 전송 (실패해도 신청 자체는 정상 처리)
+        try {
+          const sentEvent = allEventsCache.find((ev) => ev.title === (select ? select.value : ""));
+          const sheetUrl = resolveSheetUrl(sentEvent);
+          if (sheetUrl) {
+            fetch(sheetUrl, {
+              method: "POST",
+              body: data,
+              mode: "no-cors",
+            }).catch((err) => console.error("구글시트 전송 실패", err));
+          }
+        } catch (gasErr) {
+          console.error("구글시트 전송 실패", gasErr);
+        }
+
+        form.style.display = "none";
+        success.style.display = "block";
+      } else {
+        alert("전송에 실패했습니다. 잠시 후 다시 시도해 주세요.");
+      }
+    } catch (err) {
+      alert("전송에 실패했습니다. 네트워크를 확인해 주세요.");
+    }
+  });
+}
