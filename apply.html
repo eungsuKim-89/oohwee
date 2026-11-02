@@ -114,6 +114,33 @@
     background: #F2661D;
     color: #fff;
   }
+
+  /* 동의사항 전체 동의하기 */
+  .consent-all {
+    margin: 28px 0 10px;
+    padding: 14px 16px;
+    border: 1.5px solid #F2661D;
+    border-radius: 10px;
+    background: #FFF6F0;
+  }
+  .consent-all-check {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 15.5px;
+    cursor: pointer;
+  }
+  .consent-all-check input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    accent-color: #F2661D;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .consent-all-check strong {
+    font-weight: 700;
+    color: #1a1a1a;
+  }
 </style>
 </head>
 <body>
@@ -254,6 +281,14 @@
         <div class="form-row">
           <label for="message">문의사항 (선택)</label>
           <textarea id="message" name="문의내용" placeholder="궁금한 점을 자유롭게 적어주세요"></textarea>
+        </div>
+
+        <!-- ===== 전체 동의하기 ===== -->
+        <div class="consent-all">
+          <label class="consent-all-check">
+            <input type="checkbox" id="consent-all" />
+            <strong>아래 4가지 항목 전체 동의하기</strong>
+          </label>
         </div>
 
         <!-- ===== 동의 항목 4종 ===== -->
