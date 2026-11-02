@@ -33,11 +33,16 @@ collections:
                 name: "rounds"
                 widget: "list"
                 required: false
-                hint: "예: 1회차 - 09.30~10.01 (수,목) — 날짜·요일까지 한 줄에 다 적어주세요. 이 목록에 있는 문구가 그대로 신청 화면 체크박스로 나옵니다"
-                field:
-                  label: "회차명"
-                  name: "round_name"
-                  widget: "string"
+                hint: "회차명을 적고, 마감된 회차는 '마감' 체크박스를 켜주세요. 켜진 회차는 신청 화면에서 줄이 그어지고 선택할 수 없게 됩니다"
+                fields:
+                  - label: "회차명"
+                    name: "round_name"
+                    widget: "string"
+                  - label: "마감"
+                    name: "closed"
+                    widget: "boolean"
+                    default: false
+                    required: false
               - label: "장소"
                 name: "place"
                 widget: "string"
