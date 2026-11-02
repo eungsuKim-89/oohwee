@@ -58,6 +58,28 @@
     font-size: 14px;
   }
 
+  /* 마감된 회차 — 줄긋기 + 선택 불가 표시 */
+  .round-row.closed label {
+    color: var(--ink-soft, #999);
+    cursor: not-allowed;
+  }
+  .round-row.closed .round-name {
+    text-decoration: line-through;
+  }
+  .round-row.closed input[type="checkbox"] {
+    cursor: not-allowed;
+    accent-color: #bbb;
+  }
+  .round-closed-badge {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #fff;
+    background: #999;
+    padding: 2px 7px;
+    border-radius: 10px;
+    margin-left: 4px;
+  }
+
   /* 참가비 표시줄 */
   .round-fee-line {
     margin-top: 10px;
@@ -320,7 +342,7 @@
   <div class="wrap foot-grid">
     <div>
       <img class="foot-logo" src="images/logo-orange.png" alt="우위 OOHWEE" />
-      <p class="foot-tagline">우위는 프리마켓, 공연, 행사 기획을 직접 운영하는 팀입니다.</p>
+      <p class="foot-tagline">우위는 프리마켓, 공연, 기획을 직접 운영하는 팀입니다.</p>
     </div>
     <div>
       <div class="foot-row"><span class="label">E</span><span>theysayoohwee@gmail.com</span></div>
