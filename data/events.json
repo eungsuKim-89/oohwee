@@ -71,7 +71,7 @@
         },
         {
           "round_name": "2차 : 11.10~11.12 (화,수,목)",
-          "closed": false,
+          "closed": true,
           "round_price": "100,000원 (3일)"
         },
         {
