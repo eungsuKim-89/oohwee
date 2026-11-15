@@ -109,38 +109,39 @@
         {
           "closed": false,
           "round_name": "1차 : 12.02~12.03 (수,목)",
-          "round_price": "150,000원 (2일)"
+          "round_price": "100,000원 (2일)"
         },
         {
           "closed": false,
           "round_name": "2차 : 12.09~12.10 (수,목)",
-          "round_price": "150,000원 (2일)"
+          "round_price": "100,000원 (2일)"
         },
         {
           "closed": false,
           "round_name": "3차 : 12.16~12.17 (수,목)",
-          "round_price": "150,000원 (2일)"
+          "round_price": "100,000원 (2일)"
         },
         {
           "closed": false,
           "round_name": "4차 : 12.23~12.24 (수,목)",
-          "round_price": "150,000원 (2일)"
+          "round_price": "100,000원 (2일)"
         },
         {
           "closed": false,
           "round_name": "5차 : 12.29~12.30 (화,수)",
-          "round_price": "150,000원 (2일)"
+          "round_price": "100,000원 (2일)"
         }
       ],
       "place": "문정 운동정원광장 웨이브테라스(스포츠가든)",
       "hide_default_info": false,
-      "note": "OPEN 11:00 ~ CLOSE 19:00",
+      "note": "OPEN 11:00 ~ CLOSE 15:00 (14:30 자율마감)",
+      "status": "모집중",
       "title": "문정 메인스트리트 12월 프리마켓",
       "deadline": "선착순 마감",
       "id": "moonjeong-2026-12",
       "recruit_categories": "의류(여성, 남성, 브랜드, 빈티지, 홈웨어, 기능성) / 패션 잡화 / 액세서리 / 뷰티·향기 / 키즈·베이비 / 핸드메이드 / 리빙 / 팬시 / 친환경 물품 / 차량용품 / 반려동물 용품 / 반려식물·플랜테리어(다육이, 화분 등) / 먹거리(즉석 제조 제외) / 주류(위스키 제외) / 체험 및 브랜드 홍보 등 [※ 예외 품목도 협의 가능]",
       "category": "송파구 문정",
-      "deposit": "150,000원 (2일) vat별도"
+      "deposit": "100,000원 (2일) vat별도"
     }
   ]
 }
