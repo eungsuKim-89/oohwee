@@ -78,12 +78,12 @@
         },
         {
           "round_name": "3차 : 11.17~11.19 (화,수,목)",
-          "closed": true,
+          "closed": false,
           "round_price": "100,000원 (3일)"
         },
         {
           "round_name": "4차 : 11.24~11.26 (화,수,목)",
-          "closed": false,
+          "closed": true,
           "round_price": "100,000원 (3일)"
         }
       ],
